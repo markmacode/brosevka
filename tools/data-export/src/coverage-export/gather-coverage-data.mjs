@@ -25,8 +25,10 @@ export async function gatherCoverageData(covUpright, covItalic, covOblique) {
 
 	const lookup = await createCharDataLookup();
 
+	const udatMap = [];
+
 	for (const [[lchBlockStart, lchBlockEnd], block] of await collectBlockData()) {
-		let blockResults = [];
+		const blockResults = [];
 		const [lchStart, lchEnd] = findFirstLastChar(lchBlockStart, lchBlockEnd, covUpright);
 		if (!lchStart || !lchEnd) continue;
 		for (let lch = lchStart; lch < lchEnd; lch++) {
@@ -35,7 +37,7 @@ export async function gatherCoverageData(covUpright, covItalic, covOblique) {
 			const cdItalic = covItalic.get(lch);
 			const cdOblique = covOblique.get(lch);
 			if (cdUpright && cdItalic && cdOblique) {
-				const [glyphName, typoFs, uprightFs, charProps] = cdUpright;
+				const [, typoFs, uprightFs, charProps] = cdUpright;
 				const [, , italicFs] = cdItalic;
 				const [, , obliqueFs] = cdOblique;
 
@@ -44,7 +46,6 @@ export async function gatherCoverageData(covUpright, covItalic, covOblique) {
 					gc,
 					charName,
 					inFont: true,
-					glyphName: glyphName,
 					...charProps,
 					...putFeatSeries(featureSeriesStore, "typographicFeatureSets", typoFs),
 					...putFeatSeries(featureSeriesStore, "cvFeatureSetsUpright", uprightFs),
@@ -55,27 +56,52 @@ export async function gatherCoverageData(covUpright, covItalic, covOblique) {
 				blockResults.push({ lch, gc, charName, inFont: false, glyphName: undefined });
 			}
 		}
+
 		if (blockResults.length) {
 			unicodeCoverage.push({
 				name: block,
-				characters: blockResults.sort((a, b) => a.lch - b.lch),
+				...cleanupBlockResultsForExport(blockResults, udatMap),
 			});
 		}
 	}
 
-	let featureSeries = [];
+	const featureSeries = [];
 	for (const [id, x] of featureSeriesStore.values()) {
-		for (let gr of x.groups) gr.sort((a, b) => a.css.localeCompare(b.css));
+		for (const gr of x.groups) gr.sort((a, b) => a.css.localeCompare(b.css));
 		featureSeries[id] = x;
 	}
 
-	return { unicodeCoverage, featureSeries };
+	return { unicodeCoverage, featureSeries, udatMap };
+}
+
+function cleanupBlockResultsForExport(br, udatMap) {
+	br.sort((a, b) => a.lch - b.lch);
+
+	const result = [];
+	let lchMin = 0xffffff;
+	let lchMax = 0;
+	for (const ch of br) {
+		const ch1 = { ...ch };
+		if (ch1.lch < lchMin) lchMin = ch1.lch;
+		if (ch1.lch > lchMax) lchMax = ch1.lch;
+		udatMap.push([ch1.lch, ch1.gc, ch1.charName]);
+
+		delete ch1.gc;
+		delete ch1.charName;
+		result.push(ch1);
+	}
+
+	return {
+		lchMin,
+		lchMax,
+		characters: result,
+	};
 }
 
 function putFeatSeries(store, k, featSeriesList) {
 	if (!featSeriesList) return null;
 
-	let reduced = [];
+	const reduced = [];
 	for (const _featSeries of featSeriesList) {
 		const featSeries = ValidateFeatureSeries(_featSeries);
 
@@ -84,7 +110,7 @@ function putFeatSeries(store, k, featSeriesList) {
 			";;" +
 			featSeries.groups.map(g => g.map(a => a.css).join(";;")).join(";;");
 
-		let vs = store.get(key);
+		const vs = store.get(key);
 		if (vs) {
 			reduced.push(vs[0]);
 		} else {
@@ -95,15 +121,15 @@ function putFeatSeries(store, k, featSeriesList) {
 		}
 	}
 
-	if (!reduced || !reduced.length) return null;
+	if (!reduced?.length) return null;
 	return { [k]: reduced };
 }
 
 function ValidateFeatureSeries(s) {
 	let size = 0;
-	let reducedGroups = [];
+	const reducedGroups = [];
 	for (const g of s.groups) {
-		if (!g || !g.length) continue;
+		if (!g?.length) continue;
 		reducedGroups.push(g);
 		size += g.length;
 	}

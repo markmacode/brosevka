@@ -1,34 +1,36 @@
-import * as util from "util";
+import * as util from "node:util";
 
 import * as Geom from "@iosevka/geometry";
 import { Anchor } from "@iosevka/geometry/anchor";
 import { Vec2 } from "@iosevka/geometry/point";
 import { Transform } from "@iosevka/geometry/transform";
 
-import { ScheduleLeaningMark } from "./relation.mjs";
-
 export class Glyph {
 	constructor(identifier) {
 		this._m_identifier = identifier;
 		// Ranks
 		this.glyphRank = 0;
-		this.grRank = 0;
-		this.codeRank = 0xffffffff;
-		this.subRank = 0xffffffff;
+		this.codeRankHi = 0xffffffff;
+		this.metricRank = 0xffffffff;
+		this.codeRankLo = 0xffffffff;
+		this.subRank = 0;
+
 		// Geometry
 		this.geometry = new Geom.CombineGeometry();
 		this.gizmo = Transform.Id();
+
 		// Metrics
 		this.advanceWidth = 500;
 		this.divFrameParams = null;
 		this.markAnchors = {};
 		this.baseAnchors = {};
+
 		// Tracking
 		this._m_dependencyManager = null;
 		this.ctxTag = null;
 	}
 
-	[util.inspect.custom](depth, options) {
+	[util.inspect.custom](_depth, options) {
 		return options.stylize(this.toString(), "special");
 	}
 
@@ -51,11 +53,11 @@ export class Glyph {
 	get unicode() {
 		throw new TypeError("Glyph::unicode has been deprecated");
 	}
-	set unicode(x) {
+	set unicode(_x) {
 		throw new TypeError("Glyph::unicode has been deprecated");
 	}
 	// PTL pattern matching
-	static unapply(obj, arity) {
+	static unapply(obj, _arity) {
 		if (obj instanceof Glyph) return [obj];
 		else return null;
 	}
@@ -66,11 +68,17 @@ export class Glyph {
 	// Dependency
 	dependsOn(glyph) {
 		if (!this._m_dependencyManager) return;
+		if (!glyph) throw new TypeError("Dependency glyph is null or undefined");
 		this._m_dependencyManager.addDependency(this, glyph);
 	}
 	hasDependency(other) {
 		if (!this._m_dependencyManager) return false;
 		return this._m_dependencyManager.hasGlyphToGlyphDependency(this, other);
+	}
+	addVariantForRecursiveBuild(variantGlyph) {
+		if (!this._m_dependencyManager) return;
+		if (!variantGlyph) throw new TypeError("Variant glyph is null or undefined");
+		this._m_dependencyManager.addVariantDependency(this, variantGlyph);
 	}
 
 	// Copying
@@ -89,57 +97,48 @@ export class Glyph {
 
 	// Inclusion
 	include(component, copyAnchors, copyWidth) {
-		if (!component) {
-			throw new Error("Unreachable: Attempt to include a Null or Undefined");
-		} else if (component.applyToGlyph instanceof Function) {
-			return component.applyToGlyph(this, copyAnchors, copyWidth);
-		} else if (component instanceof Function) {
-			return component.call(this, copyAnchors, copyWidth);
-		} else if (component instanceof Transform) {
-			return this.applyTransform(component, copyAnchors);
-		} else if (component instanceof Glyph) {
-			return this.includeGlyph(component, copyAnchors, copyWidth);
-		} else if (component.__isNoShape) {
-			// Do nothing. By design.
-		} else {
-			throw new Error("Invalid component to be introduced.");
-		}
+		if (!component) throw new Error("Unreachable: Attempt to include a Null or Undefined");
+		return component.applyToGlyph(this, copyAnchors, copyWidth);
+	}
+
+	// Glyph inclusion
+	applyToGlyph(g, copyAnchors, copyWidth) {
+		g.includeGlyph(this, copyAnchors, copyWidth);
 	}
 	includeGlyph(g, copyAnchors, copyWidth) {
 		if (g instanceof Function) throw new Error("Unreachable");
 		if (g.isMarkSet) throw new Error("Invalid component to be introduced.");
 		// Combine anchors and get offset
-		let shift = new Vec2(0, 0);
+		const shift = new Vec2(0, 0);
 		this.combineMarks(g, shift);
 		this.includeGlyphImpl(g, shift.x, shift.y);
 		if (copyAnchors) this.copyAnchors(g);
 		if (copyWidth && g.advanceWidth >= 0) this.advanceWidth = g.advanceWidth;
-	}
-	includeMarkWithLeaningSupport(g, lm) {
-		let shift = new Vec2(0, 0);
-		this.combineMarks(g, shift, lm);
-		this.includeGlyphImpl(g, shift.x, shift.y);
 	}
 	includeGlyphImpl(g, shiftX, shiftY) {
 		if (g._m_identifier) {
 			this.includeGeometry(new Geom.ReferenceGeometry(g, shiftX, shiftY));
 		} else {
 			this.includeGeometry(
-				new Geom.TransformedGeometry(Transform.Translate(shiftX, shiftY), g.geometry),
+				Geom.TransformedGeometry.create(Transform.Translate(shiftX, shiftY), g.geometry),
 			);
 		}
 	}
+
+	// Geometry inclusion
 	includeGeometry(g) {
-		let deps = g.getDependencies();
-		if (deps && deps.length) for (const dep of deps) this.dependsOn(dep);
+		const deps = g.getDependencies();
+		if (deps?.length) for (const dep of deps) this.dependsOn(dep);
 		if (this.ctxTag) g = new Geom.TaggedGeometry(g, this.ctxTag);
 		this.geometry = Geom.combineWith(this.geometry, g);
 	}
 	includeContours(cs) {
 		this.includeGeometry(new Geom.ContourSetGeometry(cs));
 	}
+
+	// Transform inclusion
 	applyTransform(tfm, alsoAnchors) {
-		this.geometry = new Geom.TransformedGeometry(tfm, this.geometry);
+		this.geometry = Geom.TransformedGeometry.create(tfm, this.geometry);
 		if (alsoAnchors) {
 			for (const k in this.baseAnchors)
 				this.baseAnchors[k] = Anchor.transform(tfm, this.baseAnchors[k]);
@@ -147,11 +146,12 @@ export class Glyph {
 				this.markAnchors[k] = Anchor.transform(tfm, this.markAnchors[k]);
 		}
 	}
+
 	tryBecomeMirrorOf(dst, rankSet) {
 		if (rankSet.has(this) || rankSet.has(dst)) return;
-		if (dst.hasDependency(this)) return;
-		const csThis = Geom.hashGeometry(this.geometry.unlinkReferences());
-		const csDst = Geom.hashGeometry(dst.geometry.unlinkReferences());
+		if (this === dst || dst.hasDependency(this)) return;
+		const csThis = Geom.hashGeometry(this.geometry);
+		const csDst = Geom.hashGeometry(dst.geometry);
 		if (csThis && csDst && csThis === csDst) {
 			this.geometry = new Geom.CombineGeometry([new Geom.ReferenceGeometry(dst, 0, 0)]);
 			rankSet.add(this);
@@ -163,22 +163,17 @@ export class Glyph {
 	ejectTagged(tag) {
 		this.geometry = this.geometry.filterTag(t => tag !== t);
 	}
+
 	// Anchors
-	combineMarks(g, shift, lm) {
+	combineMarks(g, shift) {
 		if (!g.markAnchors) return;
-		const fScheduledLeaning = lm && ScheduleLeaningMark.get(g);
 		for (const mk in g.markAnchors) {
 			// Find the base mark class and anchor
 			const baseThisN = this.baseAnchors[mk];
 			if (!baseThisN) continue;
 
 			// Find the leaning base mark class and anchor, if any
-			let mkLeaning = mk;
-			if (fScheduledLeaning) {
-				for (const [mkT, mkLeaningT] of lm)
-					if (mk === mkT && this.baseAnchors[mkLeaningT]) mkLeaning = mkLeaningT;
-			}
-			const baseThisL = this.baseAnchors[mkLeaning];
+			const baseThisL = this.baseAnchors[mk];
 			if (!baseThisL) continue;
 
 			// Find the mark anchor in mark glyph
@@ -197,15 +192,7 @@ export class Glyph {
 						baseThisN.x - markThat.x + baseDerived.x,
 						baseThisN.y - markThat.y + baseDerived.y,
 					);
-					if (mkNewMark === mk) {
-						fSuppress = false;
-						if (mkLeaning !== mk) {
-							this.baseAnchors[mkLeaning] = new Anchor(
-								baseThisL.x - markThat.x + baseDerived.x,
-								baseThisL.y - markThat.y + baseDerived.y,
-							);
-						}
-					}
+					if (mkNewMark === mk) fSuppress = false;
 				}
 			}
 			if (fSuppress) delete this.baseAnchors[mk];
@@ -217,14 +204,16 @@ export class Glyph {
 		if (g.baseAnchors) for (const k in g.baseAnchors) this.baseAnchors[k] = g.baseAnchors[k];
 	}
 	setBaseAnchor(id, x, y) {
-		if (isNaN(x - 0) || isNaN(y - 0)) throw new Error(`NaN found in anchor coord for ${id}`);
+		if (Number.isNaN(x - 0) || Number.isNaN(y - 0))
+			throw new Error(`NaN found in anchor coord for ${id}`);
 		this.baseAnchors[id] = new Anchor(x, y).transform(this.gizmo);
 	}
 	setMarkAnchor(id, x, y, mbx, mby) {
-		if (isNaN(x - 0) || isNaN(y - 0)) throw new Error(`NaN found in anchor coord for ${id}`);
+		if (Number.isNaN(x - 0) || Number.isNaN(y - 0))
+			throw new Error(`NaN found in anchor coord for ${id}`);
 		this.markAnchors[id] = new Anchor(x, y).transform(this.gizmo);
 		if (mbx != null && mby != null) {
-			if (isNaN(mbx - 0) || isNaN(mby - 0))
+			if (Number.isNaN(mbx - 0) || Number.isNaN(mby - 0))
 				throw new Error(`NaN found in anchor coord for ${id}`);
 			this.baseAnchors[id] = new Anchor(mbx, mby).transform(this.gizmo);
 		}
@@ -243,5 +232,37 @@ export class Glyph {
 	}
 	deleteMarkAnchor(id) {
 		delete this.markAnchors[id];
+	}
+
+	// Rank comparison
+	static compareByRank(a, b) {
+		return (
+			b.glyphRank - a.glyphRank ||
+			a.codeRankHi - b.codeRankHi ||
+			a.metricRank - b.metricRank ||
+			a.codeRankLo - b.codeRankLo ||
+			a.subRank - b.subRank
+		);
+	}
+}
+
+export class GlyphProc {
+	constructor(fn) {
+		this.m_fn = fn;
+	}
+	applyToGlyph(g, copyAnchors, copyWidth) {
+		return this.m_fn.call(null, g, copyAnchors, copyWidth);
+	}
+}
+
+export class ForkGlyphProc {
+	constructor(fromGlyph, component) {
+		this.m_fromGlyph = fromGlyph;
+		this.m_component = component;
+	}
+	applyToGlyph(g) {
+		g.include(this.m_fromGlyph, true, true);
+		g.cloneRankFromGlyph(this.m_fromGlyph);
+		if (this.m_component) g.include(this.m_component, true, true);
 	}
 }

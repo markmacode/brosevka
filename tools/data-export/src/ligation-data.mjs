@@ -1,8 +1,8 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 import * as toml from "@iarna/toml";
-import { createBuildup } from "@iosevka/param/ligation";
+import { createBuildupForComposite } from "@iosevka/param/ligation";
 
 const ligationSamplesNarrow = [
 	[
@@ -100,11 +100,11 @@ function buildLigationSet(ligData, getKey) {
 	]);
 	for (const sel in ligData.composite) {
 		const comp = ligData.composite[sel];
-		if (!comp.tag) continue;
+		if (!comp.tag || !comp.desc) continue;
 		const key = getKey(comp);
 		let item = ligationSets.get(key);
 		if (!item) {
-			let ligSets = createBuildup(ligData.simple, ligData.composite, comp.buildup);
+			const ligSets = createBuildupForComposite(ligData.simple, ligData.composite, comp);
 			item = {
 				selector: sel,
 				tag: comp.tag,
@@ -117,8 +117,8 @@ function buildLigationSet(ligData, getKey) {
 			ligationSets.set(key, item);
 		} else {
 			item.tagName = [...item.tagName, comp.tag];
-			item.desc += ", " + comp.desc;
-			item.brief += ", " + comp.brief;
+			item.desc += `, ${comp.desc}`;
+			item.brief += `, ${comp.brief}`;
 		}
 	}
 	return ligationSets;

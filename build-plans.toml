@@ -30,6 +30,7 @@ exportGlyphNames = true
 [buildPlans.IosevkaSlab]
 family = "Iosevka Slab"
 desc = "Slab-serif"
+buildCharMap = true
 serifs = "slab"
 snapshotFamily = 'Iosevka Slab'
 snapshotFeature = {"NWID" = 0}
@@ -677,6 +678,7 @@ inherits = "ss18"
 family  = "Iosevka Aile"
 desc = "Sans-serif"
 spacing = "quasi-proportional"
+buildCharMap = true
 snapshotFamily = 'Iosevka Aile'
 snapshotFeature = {"NWID" = 0}
 exportGlyphNames = true
@@ -704,11 +706,14 @@ eszet = "longs-s-lig-serifless"
 lower-iota = "flat-tailed"
 lower-lambda = "straight-turn"
 lower-tau = "short-tailed"
+cyrl-a = "double-storey-serifless"
 cyrl-u = "straight-serifless"
-cyrl-ef = "split-serifless"
-cyrl-yeri = "corner"
-cyrl-yery = "corner"
+cyrl-ef = "serifless"
 four = "closed-serifless"
+six = "closed-contour"
+nine = "closed-contour"
+brace = "straight"
+guillemet = "straight"
 at = "fourfold"
 percent = "rings-continuous-slash"
 micro-sign = "toothed-serifless"
@@ -737,11 +742,14 @@ eszet = "longs-s-lig-serifless"
 lower-iota = "serifed-flat-tailed"
 lower-lambda = "straight-turn"
 lower-tau = "short-tailed"
+cyrl-a = "double-storey-serifless"
 cyrl-u = "straight-serifless"
-cyrl-ef = "split-serifless"
-cyrl-yeri = "corner"
-cyrl-yery = "corner"
+cyrl-ef = "serifless"
 four = "closed-serifless"
+six = "closed-contour"
+nine = "closed-contour"
+brace = "straight"
+guillemet = "straight"
 at = "fourfold"
 percent = "rings-continuous-slash"
 micro-sign = "toothed-serifless"
@@ -757,6 +765,7 @@ css   = "normal"
 family  = "Iosevka Etoile"
 desc = "Slab-serif"
 spacing = "quasi-proportional"
+buildCharMap = true
 serifs = 'slab'
 snapshotFamily = 'Iosevka Etoile'
 snapshotFeature = {"NWID" = 0}
@@ -764,19 +773,24 @@ exportGlyphNames = true
 
 [buildPlans.IosevkaEtoile.variants.design]
 capital-m = "flat-bottom-serifed"
-capital-w = "straight-flat-top-serifed"
+capital-w = "straight-almost-flat-top-serifed"
 f = "flat-hook-serifed"
 i = "serifed"
 j = "flat-hook-serifed"
 l = "serifed"
 t = "flat-hook"
-w = "straight-flat-top-serifed"
+w = "straight-almost-flat-top-serifed"
 long-s = "flat-hook-bottom-serifed"
 eszet = "longs-s-lig-bottom-serifed"
 lower-iota = "serifed-flat-tailed"
+lower-lambda = "straight-turn"
 lower-tau = "short-tailed"
-cyrl-ef = "split-serifed"
+cyrl-ef = "serifed"
 four = "closed-serifed"
+six = "closed-contour"
+nine = "closed-contour"
+brace = "straight"
+guillemet = "straight"
 at = "fourfold"
 percent = "rings-continuous-slash"
 
@@ -784,7 +798,7 @@ percent = "rings-continuous-slash"
 f = "flat-hook-tailed"
 i = "serifed-flat-tailed"
 l = "serifed-flat-tailed"
-w = "straight-flat-top-motion-serifed"
+w = "straight-almost-flat-top-motion-serifed"
 long-s = "flat-hook-tailed"
 eszet = "longs-s-lig-tailed-serifless"
 cyrl-ef = "split-cursive"
@@ -861,6 +875,13 @@ css = 400
 shape = 700
 menu = 700
 css = 700
+
+[buildPlans.IosevkaNoVarTest]
+family = "IosevkaNoVarTest"
+spacing = "normal"
+serifs = "sans"
+noCvSs = true
+exportGlyphNames = false
 
 ###################################################################################################
 # Collect plans

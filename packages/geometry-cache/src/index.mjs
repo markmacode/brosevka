@@ -1,18 +1,19 @@
-import fs from "fs";
+import fs from "node:fs";
 import { setTimeout } from "node:timers/promises";
-import zlib from "zlib";
+import zlib from "node:zlib";
 
-import * as CurveUtil from "@iosevka/geometry/curve-util";
-import { encode, decode } from "@msgpack/msgpack";
+import { decode, encode } from "@msgpack/msgpack";
 
-const Edition = 41;
-const MAX_AGE = 16;
+const Edition = 72;
+const MAX_AGE = 32;
+
 class GfEntry {
-	constructor(age, value) {
+	constructor(age, valueBuffer) {
 		this.age = age;
-		this.value = value;
+		this.valueBuffer = valueBuffer;
 	}
 }
+
 class Cache {
 	constructor(freshAgeKey) {
 		this.freshAgeKey = freshAgeKey;
@@ -21,19 +22,20 @@ class Cache {
 		this.diff = new Set();
 	}
 	loadRep(version, rep) {
-		if (!rep || rep.version !== version + "@" + Edition) return;
+		if (!rep || rep.version !== `${version}@${Edition}`) return;
 		this.historyAgeKeys = rep.ageKeys.slice(0, MAX_AGE);
 		const ageKeySet = new Set(this.historyAgeKeys);
 		for (const [k, e] of Object.entries(rep.gf)) {
-			if (ageKeySet.has(e.age))
-				this.gf.set(k, new GfEntry(e.age, CurveUtil.repToShape(e.value)));
+			if (ageKeySet.has(e.age)) {
+				this.gf.set(k, new GfEntry(e.age, Buffer.from(e.buf)));
+			}
 		}
 	}
 	toRep(version, diffOnly) {
-		let gfRep = {};
+		const gfRep = {};
 		for (const [k, e] of this.gf) {
 			if (!diffOnly || this.diff.has(k)) {
-				gfRep[k] = { age: e.age, value: e.value };
+				gfRep[k] = { age: e.age, buf: e.valueBuffer };
 			}
 		}
 		const mergedAgeKeys =
@@ -41,35 +43,37 @@ class Cache {
 				? this.historyAgeKeys
 				: [this.freshAgeKey, ...this.historyAgeKeys];
 		return {
-			version: version + "@" + Edition,
+			version: `${version}@${Edition}`,
 			ageKeys: mergedAgeKeys,
 			gf: gfRep,
 		};
 	}
 	isEmpty() {
-		return this.gf.size == 0;
+		return this.gf.size === 0;
 	}
 	isUpdated() {
-		return this.diff.size != 0;
+		return this.diff.size !== 0;
 	}
 	// Geometry flattening conversion cache
-	getGF(k) {
+	getGF(k, codec) {
 		const entry = this.gf.get(k);
 		if (!entry) return undefined;
-		else return entry.value;
+		else return codec.decode(entry.valueBuffer);
 	}
 	refreshGF(k) {
 		const entry = this.gf.get(k);
 		if (!entry) return;
-		if (entry.age != this.freshAgeKey) {
+		if (entry.age !== this.freshAgeKey) {
 			this.diff.add(k);
 			entry.age = this.freshAgeKey;
 		}
 	}
-	saveGF(k, v) {
-		this.gf.set(k, new GfEntry(this.freshAgeKey, v));
+	saveGF(k, codec, cs) {
+		const buf = codec.encode(cs);
+		this.gf.set(k, new GfEntry(this.freshAgeKey, buf));
 		this.diff.add(k);
 	}
+	// Merging
 	merge(other) {
 		for (const [k, e] of other.gf) {
 			this.gf.set(k, e);
@@ -77,7 +81,7 @@ class Cache {
 	}
 }
 export async function load(path, version, freshAgeKey) {
-	let cache = new Cache(freshAgeKey);
+	const cache = new Cache(freshAgeKey);
 	if (path && fs.existsSync(path)) {
 		let loadAttempt = 0;
 		while (loadAttempt < 3) {

@@ -1,6 +1,6 @@
-import * as themes from "../themes/index.mjs";
+import themes from "../themes/index.mjs";
 
-export default (function (args) {
+export default args => {
 	const theme = themes[args.theme];
 	const EM = 240;
 	return {
@@ -22,4 +22,4 @@ export default (function (args) {
 			},
 		],
 	};
-});
+};

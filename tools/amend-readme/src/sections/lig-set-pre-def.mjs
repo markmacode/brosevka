@@ -1,5 +1,5 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 import { parseLigationData } from "@iosevka/data-export/ligation-data";
 
@@ -12,6 +12,7 @@ export default async function processLigSetPreDef(argv, dirs) {
 	md.log(await fs.promises.readFile(headerPath, "utf-8"));
 	for (const gr in ligData.rawSets) {
 		if (!ligData.rawSets[gr].desc) continue;
+		if (ligData.rawSets[gr].showAsCherryPicking) continue;
 		const readmeDesc =
 			ligData.rawSets[gr].readmeDesc ||
 			`Default ligation set would be assigned to ${ligData.rawSets[gr].desc}`;

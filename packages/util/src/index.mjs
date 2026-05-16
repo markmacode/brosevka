@@ -1,3 +1,5 @@
+import * as Timers from "node:timers/promises";
+
 export function mix(a, b, p) {
 	return a + (b - a) * p;
 }
@@ -9,6 +11,9 @@ export function linreg(x0, y0, x1, y1, x) {
 }
 export function clamp(l, h, x) {
 	return x < l ? l : x > h ? h : x;
+}
+export function quantize(x, step) {
+	return step * Math.round(x / step);
 }
 export function fallback(...args) {
 	for (const item of args) if (item !== void 0) return item;
@@ -24,6 +29,35 @@ export function bez3(a, b, c, d, t) {
 		3 * t * t * (1 - t) * c +
 		t * t * t * d
 	);
+}
+export function boole(b) {
+	if (b) return 1;
+	else return 0;
+}
+export function boolePn(b) {
+	if (b) return 1;
+	else return -1;
+}
+export function strokeOffset(x, y, dx, dy, offset, contrast) {
+	const r = Math.hypot(dx, dy);
+	return {
+		x: x + (dy / r) * offset * contrast,
+		y: y - (dx / r) * offset,
+	};
+}
+
+export const min = Math.min;
+export const max = Math.max;
+
+export function slY(x0, y0, x1, slope) {
+	return y0 + slope * (x1 - x0);
+}
+export function slX(x0, y0, y1, slope) {
+	return x0 + (y1 - y0) / slope;
+}
+
+export function distP(x0, y0, x1, y1, dist) {
+	return dist / Math.hypot(x1 - x0, y1 - y0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,21 +87,14 @@ function joinSuffixListImpl(sink, k, v, telescope, configs) {
 }
 
 export const SuffixCfg = {
-	weave: function (...configs) {
-		let ans = {};
+	weave: (...configs) => {
+		const ans = {};
 		joinSuffixListImpl(ans, "", [], [], configs);
 		return ans;
 	},
-	combine: function (...configs) {
-		let ans = {};
+	combine: (...configs) => {
+		const ans = {};
 		for (const item of configs) for (const [k, v] of Object.entries(item)) ans[k] = v;
-		return ans;
-	},
-	collect: function (pairs) {
-		let ans = {};
-		for (const pair of pairs) {
-			if (pair) ans[pair.left] = pair.right;
-		}
 		return ans;
 	},
 };
@@ -108,7 +135,7 @@ export function constant(x) {
 
 export const ArrayUtil = {
 	mapIndexToItems(a, indexes) {
-		let answer = [];
+		const answer = [];
 		for (const item of indexes) answer.push(a[item]);
 		return answer;
 	},
@@ -138,3 +165,9 @@ export const ArrayUtil = {
 		return ranges;
 	},
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+export async function TaskYield() {
+	await Timers.setTimeout(16);
+}
