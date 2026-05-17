@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
-npm run build -- ttf::Brosevka
-npm run build -- woff2::Brosevka
+# npm run build -- ttf::Brosevka
 
-parallel --progress fontforge -script font-patcher/font-patcher \
-	--quiet --complete -out dist/Brosevka/NF ::: dist/Brosevka/TTF/*.ttf
+if [ -z "$CI" ]; then
+	parallel fontforge -script font-patcher/font-patcher \
+		--quiet --no-progressbars --complete -out dist/Brosevka/NF ::: dist/Brosevka/TTF/*.ttf
+else
+	parallel --progress fontforge -script font-patcher/font-patcher \
+		--quiet --complete -out dist/Brosevka/NF ::: dist/Brosevka/TTF/*.ttf
+fi
 
 ./tools/make-release.sh
