@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# npm run build -- ttf::Brosevka
+npm run build -- ttf::Brosevka
 
 if [ -z "$CI" ]; then
 	parallel fontforge -script font-patcher/font-patcher \
