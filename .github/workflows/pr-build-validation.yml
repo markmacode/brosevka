@@ -4,21 +4,43 @@ on: [pull_request]
 
 jobs:
   build:
-    if: github.repository == 'mbromell/brosevka'
+    name: Build ${{ matrix.fontName }} font
+    if: github.repository == 'be5invis/Iosevka'
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        fontName:
+          [
+            "Iosevka",
+            "IosevkaFixed",
+            "IosevkaSlab",
+            "IosevkaAile",
+            "IosevkaEtoile",
+            "IosevkaNoVarTest",
+          ]
+
     steps:
-      - uses: actions/checkout@v4
+      # Checkout repository into `iosevka` sub directory
+      - uses: actions/checkout@v6
+        with:
+          path: iosevka
+
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: lts/*
+          cache: npm
+          cache-dependency-path: iosevka/package-lock.json
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ttfautohint
+      - name: Install ttfautohint
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: ttfautohint
 
-      - name: Build Font
+      - name: Build Font ${{ matrix.fontName }}
+        shell: bash
+        working-directory: iosevka
         run: |
           npm install
-          npm run build -- ttf::Brosevka
+          npm run build -- contents::${{ matrix.fontName }}

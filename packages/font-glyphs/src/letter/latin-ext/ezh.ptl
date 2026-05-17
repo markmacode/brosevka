@@ -2,163 +2,283 @@ $$include '../../meta/macros.ptl'
 
 import [mix fallback SuffixCfg] from "@iosevka/util"
 
-
 glyph-module
 
 glyph-block Letter-Latin-Ezh : begin
 	glyph-block-import CommonShapes
 	glyph-block-import Common-Derivatives
-	glyph-block-import Letter-Shared-Shapes : CurlyTail SerifedArcEnd RetroflexHook
+	glyph-block-import Letter-Shared-Metrics : EFVJutLength
+	glyph-block-import Letter-Shared-Shapes : CurlyTail SerifedArcEnd PalatalHook RetroflexHook
 
-	define [StdTerminalShape top bot yMidBar] : begin
-		local hookDepth : Hook * (top - bot) / [fallback para.cap0 CAP]
-		local pArc : SmallArchDepthB / (SmallArchDepthA + SmallArchDepthB)
-		list
-			g4   (RightSB - OX) [mix yMidBar bot pArc]
-			hookend bot
-			g4 SB (bot + hookDepth)
+	define [ConventionalTop df top bottom xTopLeft xTopRight xMidLeft yMidLeft stroke] : glyph-proc
+		include : tagged 'strokeTop' : HBar.t xTopLeft xTopRight top stroke
+		include : tagged 'strokeMiddle' : ExtLineRhsToLhs xTopRight (top - stroke) xMidLeft yMidLeft [VSwToH stroke]
 
-	define [HooklessTerminalShape p] : function [top bot yMidBar] : list
-		g4.down.mid  (RightSB - OX) [mix yMidBar bot p] [heading Downward]
-
-	define [RetroflexConnectionTerminal top bot yMidBar] : begin
-		local hookDepth : Hook * (top - bot) / [fallback para.cap0 CAP]
-		local pArc : SmallArchDepthB / (SmallArchDepthA + SmallArchDepthB)
-		list
-			g4   (RightSB - OX) [mix yMidBar bot pArc]
-			SerifedArcEnd.RtlRhs SB Middle bot Stroke hookDepth
-
-	define [ConventionalStart top bot ezhLeft ezhRight yMidBar] : glyph-proc
-		include : HBar.t SB ezhRight top
-		include : dispiro
-			corner ezhRight (top - Stroke) [widths.rhs (Stroke / HVContrast)]
-			corner ezhLeft  yMidBar        [widths.lhs (Stroke / HVContrast)]
-
-	define [CurisveStart top bot ezhLeft ezhRight yMidBar] : glyph-proc
-		define hookTerminalWidth : AdviceStroke 3.5
-		define xDiagWidth : 1 * Stroke
-		define yFootHeight : [Math.max (0.15 * (top - bot)) (Stroke * 0.625)] + 0.4 * Stroke
-		define yHookDepth : Hook + Stroke * 0.25
-		define yHookStraightDepth : Math.min (yHookDepth - Stroke * 1.1) (yHookDepth / 3 - Stroke / 4)
-		define xHookDepth : Math.max (0.25 * (RightSB - SB)) (hookTerminalWidth * 1.5)
-		define xMockTailDepth : Math.max (0.375 * (RightSB - SB)) (hookTerminalWidth * 1.375)
+	define [CursiveTop df top bottom xTopLeft xTopRight xMidLeft yMidLeft stroke] : glyph-proc
+		define hook : Math.min Hook : [mix stroke (top - yMidLeft) 0.5] - stroke * 0.25
+		define hookTerminalWidth : Math.min stroke : df.adviceStroke2 3.5 3 (top - bottom)
+		define xDiagWidth : stroke * 1.0
+		define yFootHeight : [Math.max (0.15 * (top - bottom)) (stroke * 0.625)] + stroke * 0.4
+		define yHookDepth : hook + stroke * 0.25
+		define yHookStraightDepth : Math.min (yHookDepth - stroke * 1.1) (yHookDepth / 3 - stroke * 0.25)
+		define xHookDepth     : Math.max (0.250 * (df.rightSB - df.leftSB)) (hookTerminalWidth * 1.500)
+		define xMockTailDepth : Math.max (0.375 * (df.rightSB - df.leftSB)) (hookTerminalWidth * 1.375)
 		define kTop 0.625
 		define kBot 0.625
-		define yTailDepth : Hook * 0.5
+		define yTailDepth : hook * 0.5
 
 		include : tagged 'strokeTop' : intersection
 			spiro-outline
-				corner (-Width) bot
-				corner (-Width) (2 * top)
-				corner (ezhRight - xDiagWidth + 0.1) (2 * top)
-				corner (ezhRight - xDiagWidth + 0.1) (top - yFootHeight)
-				corner (ezhLeft + xDiagWidth) yMidBar
-				corner (ezhLeft + xDiagWidth) bot
+				corner (-VERY-FAR)                     bottom
+				corner (-VERY-FAR)                     VERY-FAR
+				corner (xTopRight - xDiagWidth + TINY) VERY-FAR
+				corner (xTopRight - xDiagWidth + TINY) (top - yFootHeight)
+				corner (xMidLeft  + xDiagWidth)        yMidLeft
+				corner (xMidLeft  + xDiagWidth)        bottom
 			dispiro
-				flat (SB + OX) (top - yHookDepth) [widths.rhs.heading hookTerminalWidth Upward]
-				curl (SB + OX) (top - yHookDepth + yHookStraightDepth) [heading Upward]
+				flat xTopLeft (top - yHookDepth) [widths.rhs.heading hookTerminalWidth Upward]
+				curl xTopLeft (top - yHookDepth + yHookStraightDepth) [heading Upward]
 				arcvh
-				g2.right.mid (SB + xHookDepth) (top - O) [widths.rhs.heading Stroke Rightward]
-				flat [mix (SB + xMockTailDepth) ezhRight kTop] (top - kTop * yTailDepth)
-				curl [mix (SB + xMockTailDepth) ezhRight 4]    (top - 4    * yTailDepth)
+				g2.right.mid (df.leftSB + xHookDepth) (top - O) [widths.rhs.heading stroke Rightward]
+				flat [mix (df.leftSB + xMockTailDepth) xTopRight kTop] (top - kTop * yTailDepth)
+				curl [mix (df.leftSB + xMockTailDepth) xTopRight 4.00] (top - 4.00 * yTailDepth)
 
-		include : VBar.r ezhRight top (top - yFootHeight) (xDiagWidth / HVContrast)
-		include : dispiro
-			corner ezhRight (top - yFootHeight) [widths.rhs (Stroke / HVContrast)]
-			corner ezhLeft  yMidBar             [widths.lhs (Stroke / HVContrast)]
+		include : VBar.r xTopRight top (top - yFootHeight) [VSwToH xDiagWidth]
+		include : tagged 'strokeMiddle' : ExtLineRhsToLhs xTopRight (top - yFootHeight) xMidLeft yMidLeft [VSwToH stroke]
+
+	define [StdTerminal df top bottom xArcMid yArcMid yMidLeft stroke hook origBar] : list
+		g4 xArcMid yArcMid
+		HookEnd bottom (sw -- stroke)
+		g4 (df.leftSB + OX) (bottom + hook)
+
+	define [HooklessTerminal df top bottom xArcMid yArcMid yMidLeft stroke hook origBar] : list
+		g4.down.mid xArcMid yArcMid [heading Downward]
+
+	define [RetroflexConnectionTerminal df top bottom xArcMid yArcMid yMidLeft stroke hook origBar] : list
+		g4 xArcMid yArcMid
+		SerifedArcEnd.RtlRhs df.leftSB bottom stroke hook origBar
+
+	define [CurlyTailTerminal df top bottom xArcMid yArcMid yMidLeft stroke hook origBar] : begin
+		local fine : Math.min stroke : df.adviceStroke2 3.5 3 (yMidLeft - bottom)
+		return : list
+			g4 xArcMid yArcMid
+			CurlyTail.n fine bottom df.leftSB df.width (bottom + 0.5 * fine)
+				yLoopTop -- ([mix yMidLeft bottom 0.5] + 0.25 * fine)
+				swBefore -- stroke
 
 	glyph-block-export EzhShape
 	define flex-params [EzhShape] : glyph-proc
+		local-parameter : df
 		local-parameter : top
-		local-parameter : bot
-		local-parameter : pLeft         -- 0.2
-		local-parameter : pRight        -- 0.925
-		local-parameter : terminalShape -- StdTerminalShape
-		local-parameter : isCursive     -- false
-		local-parameter : isSerifed     -- SLAB
+		local-parameter : bottom
+		local-parameter : fCursive      -- false
+		local-parameter : fSerifed      -- false
+		local-parameter : pxTopRight    -- 0.925
+		local-parameter : pxMidLeft     -- 0.200
+		local-parameter : pyMidLeft     -- 0.550
+		local-parameter : pyArcMid      -- nothing
+		local-parameter : terminal      -- StdTerminal
+		local-parameter : stroke        -- df.mvs
+		local-parameter : hook          -- Hook
+		local-parameter : origBar       -- nothing
+		local-parameter : ada           -- SmallArchDepthA
+		local-parameter : adb           -- SmallArchDepthB
 
-		local yMidBar : [mix bot top [if isCursive 0.5 0.55]] + HalfStroke
-		local ezhLeft : mix SB RightSB pLeft
-		local ezhRight : mix SB RightSB pRight
+		local kOXTopLeft : piecewise
+			(origBar != nothing) 0.00
+			fCursive             1.00
+			true                 0.75
+		local xTopLeft  : df.leftSB + OX * kOXTopLeft
+		local xTopRight : mix df.leftSB df.rightSB pxTopRight
+
+		local xMidLeft : mix df.leftSB df.rightSB pxMidLeft
+		local yMidLeft : [mix bottom top pyMidLeft] + stroke / 2
+
+		local xArcMid : df.rightSB - OX * 2
+		local yArcMid : if (pyArcMid != nothing)
+			mix yMidLeft bottom pyArcMid
+			YSmoothMidR yMidLeft bottom ada adb
 
 		include : union
-			if isCursive
-				CurisveStart      top bot ezhLeft ezhRight yMidBar
-				ConventionalStart top bot ezhLeft ezhRight yMidBar
+			[if fCursive CursiveTop ConventionalTop] df top bottom xTopLeft xTopRight xMidLeft yMidLeft stroke
 			dispiro
-				widths.rhs
-				flat ezhLeft yMidBar [heading Rightward]
-				curl (Middle - CorrectionOMidS) yMidBar
+				widths.rhs stroke
+				flat xMidLeft yMidLeft [heading Rightward]
+				curl [Arch.adjust-x.top df.middle (sw -- stroke)] yMidLeft
 				archv
-				terminalShape top bot yMidBar
+				terminal df top bottom xArcMid yArcMid yMidLeft stroke hook origBar
 
-		if isSerifed : include : VSerif.dl SB top VJut
+		if fSerifed : begin
+			local { jutTop jutBot jutMid } : EFVJutLength top bottom pyMidLeft stroke nothing hook
+			include : VSerif.dl xTopLeft top jutTop (VJutStroke * (stroke / Stroke))
 
-		return : object yMidBar
+		return : object xArcMid yArcMid
 
 	define EzhConfig : object
 		straightSerifless  { false false }
 		straightTopSerifed { false true  }
 		cursive            { true  false }
 
-	foreach { suffix { isCursive isSerifed } } [pairs-of EzhConfig] : do
+	foreach { suffix { fCursive fSerifed } } [pairs-of EzhConfig] : do
 		create-glyph "Ezh.\(suffix)" : glyph-proc
 			include : MarkSet.capital
-			include : EzhShape CAP 0 (isCursive -- isCursive) (isSerifed -- isSerifed)
+			include : EzhShape [DivFrame 1] CAP 0
+				fCursive  -- fCursive
+				fSerifed  -- fSerifed
+				pyMidLeft -- [if fCursive 0.50 0.52]
+				stroke    -- [AdviceStroke2 2 3 CAP]
+				hook      -- Hook
+				ada       -- ArchDepthA
+				adb       -- ArchDepthB
 
 		create-glyph "smcpEzh.\(suffix)" : glyph-proc
 			include : MarkSet.e
-			include : EzhShape XH 0 (isCursive -- isCursive) (isSerifed -- isSerifed)
+			include : EzhShape [DivFrame 1] XH 0
+				fCursive  -- fCursive
+				fSerifed  -- fSerifed
+				pyMidLeft -- [if fCursive 0.50 0.52]
+				stroke    -- [AdviceStroke2 2 3 XH]
+				hook      -- [Math.max AHook (Hook * (XH / CAP))]
+				ada       -- ArchDepthA
+				adb       -- ArchDepthB
 
 		create-glyph "ezh.\(suffix)" : glyph-proc
 			include : MarkSet.p
-			include : EzhShape XH Descender (isCursive -- isCursive) (isSerifed -- isSerifed)
+			include : EzhShape [DivFrame 1] XH Descender
+				fCursive  -- fCursive
+				fSerifed  -- fSerifed
+				pyMidLeft -- [if fCursive 0.50 0.52]
+				stroke    -- [AdviceStroke2 2 3 (XH - Descender)]
+				hook      -- SHook
+				ada       -- SmallArchDepthA
+				adb       -- SmallArchDepthB
 
 		create-glyph "ezhTail.\(suffix)" : glyph-proc
 			include : MarkSet.p
-			local b : mix Descender XH 0.25
-			local [object yMidBar] : include : EzhShape XH b
-				isCursive -- isCursive
-				isSerifed -- isSerifed
-				terminalShape -- [HooklessTerminalShape 0.5]
-			local y : mix yMidBar b 0.5
+			local ezhBottom : mix XH Descender 0.75
+			local stroke : AdviceStroke2 2 3 (XH - ezhBottom)
+			local [object xArcMid yArcMid] : include : EzhShape [DivFrame 1] XH ezhBottom
+				fCursive  -- fCursive
+				fSerifed  -- fSerifed
+				pyMidLeft -- [if fCursive 0.50 0.52]
+				pyArcMid  -- 0.5
+				stroke    -- stroke
+				hook      -- SHook
+				ada       -- SmallArchDepthA
+				adb       -- SmallArchDepthB
+				terminal  -- HooklessTerminal
 			include : dispiro
-				widths.rhs
-				g4.down.mid (RightSB - OX) y [heading Downward]
+				widths.rhs stroke
+				g4.down.mid xArcMid yArcMid [heading Downward]
 				arcvh
-				flat [mix SB RightSB 0.45] b
-				curl [mix SB RightSB 0.4] b
+				flat [mix RightSB SB 0.55] ezhBottom
+				curl [mix RightSB SB 0.60] ezhBottom
 				archv
-				g4 (SB + [HSwToV Stroke]) [mix (Descender + Stroke) b 0.5]
+				g4   (SB + [HSwToV stroke]) [mix ezhBottom (Descender + stroke) 0.5]
 				arcvh
-				flat [mix SB RightSB 0.4] (Descender + Stroke)
-				curl RightSB (Descender + Stroke)
+				flat [mix SB RightSB 0.40] (Descender + stroke)
+				curl [mix SB RightSB 1.00] (Descender + stroke)
 
 		create-glyph "ezhCurlyTail.\(suffix)" : glyph-proc
 			include : MarkSet.p
-			local p : SmallArchDepthB / (SmallArchDepthA + SmallArchDepthB)
-			local [object yMidBar] : include : EzhShape XH Descender
-				isCursive -- isCursive
-				isSerifed -- isSerifed
-				terminalShape -- [HooklessTerminalShape p]
-			local fine : AdviceStroke2 3 5 (XH - Descender)
-			local rinner : (XH * 0.4 - fine * 1.5) / 2
-			local m1 : RightSB - [HSwToV Stroke] - OX
-			local x2 : RightSB - HalfStroke
-			local y2 Descender
-			include : dispiro
-				widths.lhs
-				g4.down.mid m1 [mix [mix Descender XH 0.6] Descender p] [heading Downward]
-				CurlyTail fine rinner m1 Descender SB x2 y2
+			include : EzhShape [DivFrame 1] XH Descender
+				fCursive  -- fCursive
+				fSerifed  -- fSerifed
+				pyMidLeft -- [if fCursive 0.50 0.52]
+				stroke    -- [AdviceStroke2 2 3 (XH - Descender)]
+				hook      -- SHook
+				ada       -- SmallArchDepthA
+				adb       -- SmallArchDepthB
+				terminal  -- CurlyTailTerminal
 
 		create-glyph "ezhRetroflexHook.\(suffix)" : glyph-proc
-			include : MarkSet.p
-			include : EzhShape XH 0
-				isCursive -- isCursive
-				isSerifed -- isSerifed
-				terminalShape -- RetroflexConnectionTerminal
-			include : RetroflexHook.l SB 0 (yAttach -- Hook)
+			include : MarkSet.e
+			local stroke : AdviceStroke2 2 3 XH
+			include : EzhShape [DivFrame 1] XH 0
+				fCursive  -- fCursive
+				fSerifed  -- fSerifed
+				pyMidLeft -- [if fCursive 0.50 0.52]
+				stroke    -- stroke
+				hook      -- SHook
+				ada       -- SmallArchDepthA
+				adb       -- SmallArchDepthB
+				terminal  -- RetroflexConnectionTerminal
+			include : RetroflexHook.l
+				x       -- SB
+				y       -- 0
+				yAttach -- SHook
+				refSw   -- stroke
 
+		create-glyph "ezhPalatalHook.\(suffix)" : glyph-proc
+			local df : include : DivFrame para.advanceScaleM 1
+			include : df.markSet.p
+			local subDf : DivFrame (0.75 * para.advanceScaleM) 2
+			local stroke : subDf.adviceStroke2 2 3 (XH - Descender)
+			local [object xArcMid yArcMid] : include : EzhShape subDf XH Descender
+				fCursive  -- fCursive
+				fSerifed  -- fSerifed
+				pyMidLeft -- [if fCursive 0.50 0.52]
+				stroke    -- stroke
+				hook      -- SHook
+				ada       -- [subDf.archDepthAOf SmallArchDepth stroke]
+				adb       -- [subDf.archDepthBOf SmallArchDepth stroke]
+			include : PalatalHook.r
+				x       -- df.rightSB
+				y       -- (yArcMid - stroke / 2)
+				xLink   -- (xArcMid + O)
+				refSw   -- [Math.min stroke : subDf.adviceStroke 3]
+				maskOut -- [intersection [MaskBelow (yArcMid - stroke / 2)] [MaskLeft (xArcMid + O)]]
+
+		if [not fSerifed] : begin
+			create-glyph "ezh/phoneticRight.\(suffix)" : glyph-proc
+				include : MarkSet.p
+				include : EzhShape [DivFrame 1] XH Descender
+					fCursive  -- fCursive
+					fSerifed  -- fSerifed
+					pxMidLeft -- (4/15)
+					pyMidLeft -- [if fCursive 0.50 0.52]
+					stroke    -- [AdviceStroke2 2 3 (XH - Descender)]
+					hook      -- SHook
+					ada       -- SmallArchDepthA
+					adb       -- SmallArchDepthB
+
+			create-glyph "ezhRetroflexHook/phoneticRight.\(suffix)" : glyph-proc
+				include : MarkSet.p
+				local stroke : AdviceStroke2 2 3 (XH - Descender)
+				include : EzhShape [DivFrame 1] XH Descender
+					fCursive  -- fCursive
+					fSerifed  -- fSerifed
+					pxMidLeft -- (4/15)
+					pyMidLeft -- [if fCursive 0.50 0.52]
+					stroke    -- stroke
+					hook      -- SHook
+					ada       -- SmallArchDepthA
+					adb       -- SmallArchDepthB
+					terminal  -- RetroflexConnectionTerminal
+				include : RetroflexHook.l
+					x       -- SB
+					y       -- Descender
+					yAttach -- (Descender + SHook)
+					refSw   -- stroke
+
+			create-glyph "ezhPalatalHook/phoneticRight.\(suffix)" : glyph-proc
+				include : MarkSet.p
+				local stroke : AdviceStroke2 2 3 (XH - Descender)
+				local [object xArcMid yArcMid] : include : EzhShape [DivFrame 1] XH Descender
+					fCursive  -- fCursive
+					fSerifed  -- fSerifed
+					pxMidLeft -- (4/15)
+					pyMidLeft -- [if fCursive 0.50 0.52]
+					stroke    -- stroke
+					hook      -- SHook
+					ada       -- SmallArchDepthA
+					adb       -- SmallArchDepthB
+				include : PalatalHook.r
+					x       -- ([mix 0 Width (4/3)] - SB)
+					y       -- (yArcMid - stroke / 2)
+					xLink   -- (xArcMid + O)
+					refSw   -- [Math.min stroke : AdviceStroke 3]
+					maskOut -- [intersection [MaskBelow (yArcMid - stroke / 2)] [MaskLeft (xArcMid + O)]]
 
 	select-variant 'Ezh' 0x1B7
 	select-variant 'smcpEzh' 0x1D23 (follow -- 'Ezh')
@@ -166,73 +286,82 @@ glyph-block Letter-Latin-Ezh : begin
 	select-variant 'ezhTail' 0x1BA (follow -- 'ezh')
 	select-variant 'ezhCurlyTail' 0x293 (follow -- 'ezh')
 	select-variant 'ezhRetroflexHook' 0x1D9A (follow -- 'ezh')
+	select-variant 'ezhPalatalHook' 0x1DF18 (follow -- 'ezh')
+	select-variant 'ezh/phoneticRight'
+	select-variant 'ezhRetroflexHook/phoneticRight' (follow -- 'ezh/phoneticRight')
+	select-variant 'ezhPalatalHook/phoneticRight' (follow -- 'ezh/phoneticRight')
 
-	alias 'cyrl/Ezh' 0x4E0 'Ezh'
-	alias 'cyrl/ezh' 0x4E1 'ezh'
+	alias 'cyrl/abk/Dze' 0x4E0 'Ezh'
+	alias 'cyrl/abk/dze' 0x4E1 'ezh'
 
-	# Variants for Ezh doesn't make sense for Lyogh.
+	# Variants for Ezh don't make sense for Lyogh.
 	create-glyph 'lyogh.serifless' : glyph-proc
 		include : MarkSet.bp
-		include : EzhShape XH Descender 0.4
-		include : VBar.l SB (XH * 0.1) Ascender
-
-	create-glyph 'lyogh.hooky' : glyph-proc
-		include [refer-glyph 'lyogh.serifless'] AS_BASE ALSO_METRICS
-		include : HSerif.lt SB Ascender SideJut
+		include : EzhShape [DivFrame 1] XH Descender
+			pxMidLeft -- 0.4
+			pyMidLeft -- 0.52
+			stroke    -- [AdviceStroke2 2 3 (XH - Descender)]
+			hook      -- SHook
+			origBar   -- Stroke
+			ada       -- SmallArchDepthA
+			adb       -- SmallArchDepthB
+		include : VBar.l SB 0 Ascender
+		create-forked-glyph 'lyogh.hooky' : HSerif.lt SB Ascender SideJut
 
 	select-variant 'lyogh' 0x26E
 
 	create-glyph 'lyoghRTail.serifless' : glyph-proc
 		include : MarkSet.b
-		include : EzhShape XH 0 0.4
+		include : EzhShape [DivFrame 1] XH 0
+			pxMidLeft -- 0.4
+			pyMidLeft -- 0.52
+			stroke    -- [AdviceStroke2 2 3 XH]
+			hook      -- SHook
+			origBar   -- Stroke
+			ada       -- SmallArchDepthA
+			adb       -- SmallArchDepthB
+			terminal  -- RetroflexConnectionTerminal
 		include : VBar.l SB 0 Ascender
 		include : RetroflexHook.lExt SB 0
-
-	create-glyph 'lyoghRTail.hooky' : glyph-proc
-		include [refer-glyph 'lyoghRTail.serifless'] AS_BASE ALSO_METRICS
-		include : HSerif.lt SB Ascender SideJut
+		create-forked-glyph 'lyoghRTail.hooky' : HSerif.lt SB Ascender SideJut
 
 	select-variant 'lyoghRTail' 0x1DF05 (follow -- 'lyogh')
 
-
-	# Used by ampersand only
-	# Current reversed Ezh is generated using a auto-build.
+	# Used by ampersand only.
+	# Current reversed Ezh is generated using an auto-build.
 	glyph-block-export RevEzhShape
 	define flex-params [RevEzhShape] : glyph-proc
 		local-parameter : top
-		local-parameter : bot
-		local-parameter : pLeft -- 0.075
-		local-parameter : pRight -- 0.8
-		local-parameter : hookless -- false
-		local-parameter : ada -- SmallArchDepthA
-		local-parameter : adb -- SmallArchDepthB
-		local-parameter : diagCoeff -- 1.2
-		local-parameter : pyBar -- 0.6
+		local-parameter : bottom
+		local-parameter : pxTopLeft     -- 0.075
+		local-parameter : pxMidRight    -- 0.800
+		local-parameter : pyMidRight    -- 0.6
+		local-parameter : hookless      -- false
+		local-parameter : ada           -- SmallArchDepthA
+		local-parameter : adb           -- SmallArchDepthB
 
-		local cor : HSwToV diagCoeff
-		local yMidBar : RevEzhShape.yMidBar top bot pyBar
-		local ezhRight : mix SB RightSB pRight
-		local ezhLeft : mix SB RightSB pLeft
+		local xMidRight : mix SB RightSB pxMidRight
+		local xTopLeft  : mix SB RightSB pxTopLeft
 
-		include : HBar.t ezhLeft RightSB top
-		include : dispiro
-			corner ezhLeft (top - Stroke) [widths.lhs (Stroke / HVContrast)]
-			corner ezhRight yMidBar       [widths.rhs (Stroke / HVContrast)]
+		local yMidRight : RevEzhShape.yMidRight top bottom pyMidRight
+
+		include : HBar.t xTopLeft RightSB top
+		include : ExtLineLhsToRhs xTopLeft (top - Stroke) xMidRight yMidRight [VSwToH Stroke]
 
 		include : dispiro
 			widths.lhs
-			flat ezhRight yMidBar [heading Leftward]
-			curl (Middle + CorrectionOMidS) yMidBar
+			flat xMidRight yMidRight [heading Leftward]
+			curl [Arch.adjust-x.bot Middle] yMidRight
 			archv
 			if hookless
 			: then : list
-				g4.down.mid (SB + OX) [RevEzhShape.yLoopLeft top bot pyBar ada adb]
+				g4.down.mid (SB + OX) [RevEzhShape.yArcMid top bottom pyMidRight ada adb]
 			: else : list
-				g4   (SB + OX) [RevEzhShape.yLoopLeft top bot pyBar ada adb]
-				hookend bot
-				g4 RightSB (bot + Hook * ((top - bot) / CAP))
+				g4 (SB + OX) [RevEzhShape.yArcMid top bottom pyMidRight ada adb]
+				HookEnd bottom
+				g4 RightSB (bottom + Hook * ((top - bottom) / CAP))
 		if SLAB : begin
-			include : VSerif.dr RightSB top VJut
-	set RevEzhShape.yMidBar : lambda [top bot pyBar] : mix bot top pyBar
-	set RevEzhShape.yLoopLeft : lambda [top bot pyBar ada adb]
-		mix [RevEzhShape.yMidBar top bot pyBar] bot (ada / (ada + adb))
+			local { jutTop jutBot jutMid } : EFVJutLength top bottom pyMidRight nothing nothing (Hook * ((top - bottom) / CAP))
+			include : VSerif.dr RightSB top jutTop
+	set RevEzhShape.yMidRight : lambda [top bottom pyMidRight] : mix bottom top pyMidRight
+	set RevEzhShape.yArcMid   : lambda [top bottom pyMidRight ada adb] : YSmoothMidL [RevEzhShape.yMidRight top bottom pyMidRight] bottom ada adb

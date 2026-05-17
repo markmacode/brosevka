@@ -4,18 +4,8 @@ import * as TypoGeom from "typo-geom";
 import { Point, Vec2 } from "./point.mjs";
 import { Transform } from "./transform.mjs";
 
-function contourToRep(contour) {
-	let c = [];
-	for (const z of contour) c.push({ type: z.type, x: z.x, y: z.y });
-	return c;
-}
-function repToContour(contourRep) {
-	let c = [];
-	for (const z of contourRep) c.push(Point.fromXY(z.type, z.x, z.y));
-	return c;
-}
 function convertContourToArcs(contour) {
-	if (!contour || !contour.length) return [];
+	if (!contour?.length) return [];
 	const newContour = [];
 	let z0 = Point.from(Point.Type.Corner, contour[0]);
 	for (let j = 1; j < contour.length; j++) {
@@ -41,12 +31,12 @@ function convertContourToArcs(contour) {
 				const zc = z;
 				let zf = contour[(j + 1) % contour.length];
 				const zfIsCorner = zf.type === Point.Type.contour;
-				if (!zfIsCorner) zf = Point.from(Point.Type.Corner, zc).mix(0.5, zf);
+				if (!zfIsCorner) zf = Point.from(Point.Type.Corner, zc).mix(zf, 0.5);
 				newContour.push(
 					new TypoGeom.Arcs.Bez3(
 						z0,
-						Point.from(Point.Type.CubicStart, z0).mix(2 / 3, zc),
-						Point.from(Point.Type.CubicEnd, zf).mix(2 / 3, zc),
+						Point.from(Point.Type.CubicStart, z0).mix(zc, 2 / 3),
+						Point.from(Point.Type.CubicEnd, zf).mix(zc, 2 / 3),
 						Point.from(Point.Type.Corner, zf),
 					),
 				);
@@ -115,12 +105,6 @@ export class OffsetCurve {
 export function convertShapeToArcs(shape) {
 	return shape.map(convertContourToArcs);
 }
-export function shapeToRep(shape) {
-	return shape.map(contourToRep);
-}
-export function repToShape(shapeRep) {
-	return shapeRep.map(repToContour);
-}
 
 export class BezToContoursSink {
 	constructor(gizmo) {
@@ -136,26 +120,33 @@ export class BezToContoursSink {
 		this.lastContour = [];
 	}
 	moveTo(x, y) {
-		if (!isFinite(x) || !isFinite(y)) throw new Error("Invalid coordinates detected in moveTo");
+		if (!Number.isFinite(x) || !Number.isFinite(y))
+			throw new Error("Invalid coordinates detected in moveTo");
 		this.endShape();
 		this.lastContour.push(Point.transformedXY(this.gizmo, Point.Type.Corner, x, y));
 	}
 	lineTo(x, y) {
-		if (!isFinite(x) || !isFinite(y)) throw new Error("Invalid coordinates detected in lineTo");
+		if (!Number.isFinite(x) || !Number.isFinite(y))
+			throw new Error("Invalid coordinates detected in lineTo");
 		this.lastContour.push(Point.transformedXY(this.gizmo, Point.Type.Corner, x, y));
 	}
 	curveTo(xc, yc, x, y) {
-		if (!isFinite(xc) || !isFinite(yc) || !isFinite(x) || !isFinite(y))
+		if (
+			!Number.isFinite(xc) ||
+			!Number.isFinite(yc) ||
+			!Number.isFinite(x) ||
+			!Number.isFinite(y)
+		)
 			throw new Error("Invalid coordinates detected in curveTo");
 		this.lastContour.push(Point.transformedXY(this.gizmo, Point.Type.Quadratic, xc, yc));
 		this.lastContour.push(Point.transformedXY(this.gizmo, Point.Type.Corner, x, y));
 	}
 	cubicTo(x1, y1, x2, y2, x, y) {
-		if (!isFinite(x1) || !isFinite(y1))
+		if (!Number.isFinite(x1) || !Number.isFinite(y1))
 			throw new Error("Invalid coordinates detected in cubicTo");
-		if (!isFinite(x2) || !isFinite(y2))
+		if (!Number.isFinite(x2) || !Number.isFinite(y2))
 			throw new Error("Invalid coordinates detected in cubicTo");
-		if (!isFinite(x) || !isFinite(y))
+		if (!Number.isFinite(x) || !Number.isFinite(y))
 			throw new Error("Invalid coordinates detected in cubicTo");
 
 		this.lastContour.push(Point.transformedXY(this.gizmo, Point.Type.CubicStart, x1, y1));
@@ -221,4 +212,20 @@ export class RoundCapCurve {
 
 		return new Vec2(dx, dy);
 	}
+}
+
+export function InPlaceTransformBez3Shape(tf, shape) {
+	if (!tf || Transform.isIdentity(tf)) return shape;
+	for (const c of shape) {
+		for (let i = 0; i < c.length; i++) c[i] = Bez3WithTransform(c[i], tf);
+	}
+}
+export function Bez3WithTransform(arc, tf) {
+	if (!tf || Transform.isIdentity(tf)) return arc;
+	return new TypoGeom.Arcs.Bez3(
+		Point.transformedXY(tf, Point.Type.Corner, arc.a.x, arc.a.y),
+		Point.transformedXY(tf, Point.Type.CubicStart, arc.b.x, arc.b.y),
+		Point.transformedXY(tf, Point.Type.CubicEnd, arc.c.x, arc.c.y),
+		Point.transformedXY(tf, Point.Type.Corner, arc.d.x, arc.d.y),
+	);
 }

@@ -1,200 +1,219 @@
 ## Modifications since last major version
 
-### 29.2.1
+### 34.5.0
 
-* Refine shape of `U+1CC09`, `U+1CC0A`, `U+1CC10` and `U+1CC11`.
-* Refine terminal shape of Schwa and Reversed Lower E (`U+018F`, `U+0258`..`U+025A`, `U+04D8`..`U+04D9`) under italics.
-* Make CYRILLIC CAPITAL LETTER SHHA (`U+04BA`) follow variants of Capital H (`cv08`).
+* Add Characters:
+  - WHITE HEAVY CHECK MARK (`U+2705`) (#3171).
+  - NEGATIVE SQUARED CROSS MARK (`U+274E`) (#3171).
+  - LATIN SMALL LETTER TURNED O OPEN-O (`U+AB43`).
+  - LATIN SMALL LETTER TURNED O OPEN-O WITH STROKE (`U+AB44`).
+* Add `double-storey-flat-bottom` variants for Latin/Cyrillic Lower A (`a`, `а`).
+* Add `bilateral-motion-serifed` variants for Cyrillic Capital/Lower Ya (`Я`, `я`).
+* Refine shape of the following characters:
+  - LATIN SMALL LETTER AE (`U+00E6`).
+  - LATIN SMALL LIGATURE OE (`U+0153`).
+  - LATIN SMALL LETTER DB DIGRAPH (`U+0238`).
+  - LATIN SMALL LETTER QP DIGRAPH (`U+0239`).
+  - CYRILLIC SMALL LIGATURE A IE (`U+04D5`).
+  - CYRILLIC CAPITAL LETTER KOMI DJE (`U+0502`).
+  - CYRILLIC SMALL LETTER KOMI DJE (`U+0503`).
+  - LATIN SMALL LETTER TURNED AE (`U+1D02`).
+  - LATIN SMALL LETTER TURNED OE (`U+1D14`).
+  - MODIFIER LETTER SMALL TURNED AE (`U+1D46`).
+  - LATIN SMALL LETTER UE (`U+1D6B`).
+  - COMBINING LATIN SMALL LETTER FLATTENED OPEN A ABOVE (`U+1DD3`) ... COMBINING LATIN SMALL LETTER AO (`U+1DD5`).
+  - CYRILLIC CAPITAL LETTER DOUBLE MONOCULAR O (`U+A66C`).
+  - CYRILLIC SMALL LETTER DOUBLE MONOCULAR O (`U+A66D`).
+  - CYRILLIC CAPITAL LETTER DOUBLE O (`U+A698`).
+  - CYRILLIC SMALL LETTER DOUBLE O (`U+A699`).
+  - LATIN SMALL LETTER AA (`U+A733`).
+  - LATIN SMALL LETTER AO (`U+A735`).
+  - LATIN SMALL LETTER AU (`U+A737`).
+  - LATIN CAPITAL LETTER OO (`U+A74E`).
+  - LATIN SMALL LETTER OO (`U+A74F`).
+  - MODIFIER LETTER SMALL LIGATURE OE (`U+A7F9`).
+  - LATIN SMALL LETTER A REVERSED-SCHWA (`U+AB31`).
+  - LATIN SMALL LETTER INVERTED OE (`U+AB40`) ... LATIN SMALL LETTER TURNED OE WITH HORIZONTAL STROKE (`U+AB42`).
+  - LATIN SMALL LETTER UO (`U+AB63`).
+  - MODIFIER LETTER SMALL AE (`U+10783`).
+
+
+### 34.4.0
+
+* Add `above-baseline` variants for Greek Lower Chi (`χ`).
+* Add `tall` variants for Cyrillic Lower Ze (`з`).
+* Add `cursive-interrupted` and `cursive-interrupted-tall` variants for Cyrillic Lower Ve (`в`).
+  - Optimize glyphs for original `cursive` and `cursive-tall` variants.
+* Add `rounded-top` variants for Cyrillic Lower Ve (`в`).
+
+
+### 34.3.0
+
+* Add narrow bent hook variants for `f`, `j`, `r`, and `t` (#3132).
+* Add `crossbar-at-half-ascender-height` variants for `f`.
+* Add `motion-bottom-serifed` variants for `q`.
+* Add `middle-serifed-half-ascender` variants for long-s (`ſ`) and lower eszett (`ß`).
+* Add `serifed` variants for Greek Lower Gamma (`γ`).
+* Add `diagonal-tailed` variant for Greek Lower Pi (`π`).
+* Add `short-neck` and `short-neck2` variants for Greek Lower Phi (`φ`) and Psi (`ψ`).
+* Add dense variants for ellipsis (#3133).
+* Add IPA localization forms for Greek Lower Lambda (`λ`) and Psi (`ψ`).
+* Refine shape of the following characters:
+  - CYRILLIC CAPITAL LETTER DJE (`U+0402`).
+  - CYRILLIC CAPITAL LETTER TSHE (`U+040B`).
+  - CYRILLIC CAPITAL LETTER PSI (`U+0470`).
+  - CYRILLIC SMALL LETTER PSI (`U+0471`).
+  - MODIFIER LETTER RAISED INVERTED EXCLAMATION MARK (`U+A71E`).
+  - MODIFIER LETTER DENTAL CLICK (`U+107B6`).
+  - MODIFIER LETTER LATERAL CLICK (`U+107B7`).
+  - MODIFIER LETTER ALVEOLAR CLICK (`U+107B8`).
+
+
+### 34.2.1
+
+* Fix Iosevka Fixed width validation by removing U+1F8D0..U+1F8D8 from the Fixed fonts.
+
+
+### 34.2.0
+
+* Add Latin localization forms for Sámi languages.
+* Add IPA localization forms for Lower B and D with stroke (`ƀ`, `đ`).
+* Refine shape of the following characters:
+  - LATIN CAPITAL LETTER ENG (`U+014A`).
+  - LATIN CAPITAL LETTER TURNED M (`U+019C`).
+  - LATIN CAPITAL LETTER N WITH LONG RIGHT LEG (`U+0220`).
+  - LATIN CAPITAL LETTER SMALL Q WITH HOOK TAIL (`U+024A`).
+  - LATIN LETTER SMALL CAPITAL G (`U+0262`).
+  - LATIN LETTER SMALL CAPITAL G WITH HOOK (`U+029B`).
+  - LATIN SMALL LETTER LS DIGRAPH (`U+02AA`) ... LATIN SMALL LETTER LZ DIGRAPH (`U+02AB`).
+  - GREEK CAPITAL LETTER IOTA WITH TONOS (`U+038A`).
+  - COMBINING LATIN LETTER SMALL CAPITAL G (`U+1DDB`).
+  - GREEK CAPITAL LETTER IOTA WITH PSILI (`U+1F38`) ... GREEK CAPITAL LETTER IOTA WITH DASIA AND PERISPOMENI (`U+1F3F`).
+  - GREEK CAPITAL LETTER IOTA WITH VARIA (`U+1FDA`) ... GREEK CAPITAL LETTER IOTA WITH OXIA (`U+1FDB`).
+  - SCRIPT SMALL L (`U+2113`).
+  - TELEPHONE SIGN (`U+2121`) (#3080).
+  - FACSIMILE SIGN (`U+213B`) (#3080).
+  - LATIN CAPITAL LETTER ALPHA (`U+2C6D`).
+  - LATIN CAPITAL LETTER TURNED ALPHA (`U+2C70`).
+  - LATIN CAPITAL LETTER INSULAR R (`U+A782`).
+  - LATIN CAPITAL LETTER SCRIPT G (`U+A7AC`).
+  - LATIN CAPITAL LETTER GLOTTAL I (`U+A7BC`).
+  - LATIN SMALL LETTER M WITH CROSSED-TAIL (`U+AB3A`).
+  - MODIFIER LETTER SMALL CAPITAL G (`U+10792`).
+  - MODIFIER LETTER SMALL CAPITAL G WITH HOOK (`U+10794`).
+  - MODIFIER LETTER SMALL LS DIGRAPH (`U+10799`) ... MODIFIER LETTER SMALL LZ DIGRAPH (`U+1079A`).
+  - MATHEMATICAL DOUBLE-STRUCK CAPITAL G (`U+1D53E`).
+  - LATIN LETTER SMALL CAPITAL TURNED G (`U+1DF02`).
+
+
+### 34.1.0
+
+* Add IPA localization forms for letters with caron (e.g. {`ď`, `Ľ`, `ľ`, `ť`} → {`d͏̌`, `L͏̌`, `l͏̌`, `t͏̌`}).
+* Add IPA localization form for TRIPLE VERTICAL BAR DELIMITER (`U+2980`).
 * Add characters:
-  - ARC (`U+2312`) ... SECTOR (`U+2314`).
-  - ERASE TO THE RIGHT (`U+2326`) ... X IN A RECTANGLE BOX (`U+2327`) (#2289).
-  - ERASE TO THE LEFT (`U+232B`) (#2289).
-  - NOT CHECK MARK (`U+237B`).
-  - BELL SYMBOL (`U+237E`) ... VERTICAL LINE WITH MIDDLE DOT (`U+237F`).
-  - WHITE SQUARE WITH CENTRE VERTICAL LINE (`U+2385`).
-  - MONOSTABLE SYMBOL (`U+238D`).
-  - DENTISTRY SYMBOL LIGHT VERTICAL AND TOP RIGHT (`U+23BE`) ... DENTISTRY SYMBOL LIGHT VERTICAL AND BOTTOM LEFT (`U+23CC`).
-  - EARTH GROUND (`U+23DA`) ... FUSE (`U+23DB`).
-  - WHITE TRAPEZIUM (`U+23E2`).
-  - STRAIGHTNESS (`U+23E4`) ... FLATNESS (`U+23E5`).
-  - UP ARROWHEAD IN A RECTANGLE BOX (`U+2BB9`).
-  - BALLOT BOX WITH LIGHT X (`U+2BBD`) ... CIRCLED BOLD X (`U+2BBF`).
-  - LEFT-FACING SNAKE HEAD WITH OPEN MOUTH (`U+1CC70`) ... DOWN-FACING SNAKE HEAD WITH CLOSED MOUTH (`U+1CC77`)  (Proposed for Unicode 16; L2/21-235).
-  - UPPER LEFT QUADRANT FACE WITH OPEN EYES (`U+1CCA6`) ... BOTTOM HALF FORWARD-FACING RUNNER FRAME-4 (`U+1CDF4`)  (Proposed for Unicode 16; L2/21-235).
-  - TOP HALF FLAILING ROBOT FRAME-1 (`U+1CDF6`) ... TOP HALF FLAILING ROBOT FRAME-2 (`U+1CDF7`)  (Proposed for Unicode 16; L2/21-235).
-* Fix `zero` feature application on MATHEMATICAL MONOSPACE DIGIT ZERO (`U+1D7F6`) (#2298).
+  - MUSICAL SYMBOL BREATH MARK (`U+1D112`).
+* Refine shape of the following characters:
+  - LATIN LETTER DENTAL CLICK (`U+01C0`) ... LATIN LETTER ALVEOLAR CLICK (`U+01C2`).
+  - MODIFIER LETTER GLOTTAL STOP (`U+02C0`).
+  - MODIFIER LETTER REVERSED GLOTTAL STOP (`U+02C1`).
+  - Z NOTATION SCHEMA PROJECTION (`U+2A21`) (#3043).
+  - MODIFIER LETTER DENTAL CLICK (`U+10786`) ... MODIFIER LETTER ALVEOLAR CLICK (`U+107B8`).
+* Make certain characters slightly narrower under Quasi-Proportional. Affected characters:
+  - EXCLAMATION MARK (`U+0021`).
+  - APOSTROPHE (`U+0027`).
+  - COMMA (`U+002C`).
+  - FULL STOP (`U+002E`).
+  - COLON (`U+003A`).
+  - SEMICOLON (`U+003B`).
+  - GRAVE ACCENT (`U+0060`).
+  - INVERTED EXCLAMATION MARK (`U+00A1`).
+  - ACUTE ACCENT (`U+00B4`).
+  - MIDDLE DOT (`U+00B7`).
+  - LATIN LETTER RETROFLEX CLICK (`U+01C3`).
+  - MODIFIER LETTER PRIME (`U+0289`) ... MODIFIER LETTER REVERSED COMMA (`U+028D`).
+  - MODIFIER LETTER VERTICAL LINE (`U+02C8`).
+  - MODIFIER LETTER LOW VERTICAL LINE (`U+02CC`).
+  - GREEK NUMERAL SIGN (`U+0374`).
+  - GREEK LOWER NUMERAL SIGN (`U+0375`).
+  - GREEK QUESTION MARK (`U+037E`).
+  - GREEK ANO TELEIA (`U+0387`).
+  - ARMENIAN EMPHASIS MARK (`U+055B`).
+  - ARMENIAN COMMA (`U+055D`).
+  - ARMENIAN FULL STOP (`U+0589`).
+  - PUNCTUATION SPACE (`U+2008`).
+  - LEFT SINGLE QUOTATION MARK (`U+2018`) ... SINGLE HIGH REVERSED-9 QUOTATION MARK (`U+2018`).
+  - PRIME (`U+2032`).
+  - REVERSED PRIME (`U+2035`).
+  - REVERSED SEMICOLON (`U+204F`).
+  - TWO DOT PUNCTUATION (`U+205A`).
+  - TRICOLON (`U+205D`).
+  - VERTICAL FOUR DOTS (`U+205E`).
+  - DOT OPERATOR (`U+22C5`).
+  - DOTTED FENCE (`U+2999`).
+  - WORD SEPARATOR MIDDLE DOT (`U+2E31`) ... TURNED SEMICOLON (`U+2E35`).
+  - VERTICAL SIX DOTS (`U+2E3D`).
+  - REVERSED COMMA (`U+2E41`).
+  - DOUBLE SUSPENSION MARK (`U+2E44`).
+  - DOUBLE STACKED COMMA (`U+2E49`).
+  - LATIN CAPITAL LETTER SALTILLO (`U+A78B`).
+  - LATIN SMALL LETTER SALTILLO (`U+A78C`).
+  - LATIN LETTER SINOLOGICAL DOT (`U+A78F`).
+  - MODIFIER LETTER RETROFLEX CLICK WITH RETROFLEX HOOK (`U+107B9`).
+  - LATIN LETTER RETROFLEX CLICK WITH RETROFLEX HOOK (`U+1DF0A`).
 
 
-### 29.2.0
+### 34.0.0
 
-* Drop NWID glyphs for ligatures in quasi-proportionals as they do not make sense for these styles. This change will save around 2MB for each Aile or Etoile font.
-* Make presence of descender serif automatic for GREEK CAPITAL KAI SYMBOL (`U+03CF`).
-* Make presence of top-left serif automatic for CYRILLIC {CAPITAL|SMALL} LETTER BASHKIR KA (`U+04A0`..`U+04A1`).
-* Make GREEK SMALL LETTER DIGAMMA (`U+03DD`) respond to top-right serif variants of Greek Capital Gamma (`cv56`).
-* Make GREEK SMALL LETTER HETA (`U+0371`) respond to top-left serif variants of `H` (`cv08`).
-* Make CYRILLIC {CAPITAL|SMALL} LIGATURE EN GHE (`U+04A4`..`U+04A5`) respond to top-right serif variants of Greek Capital Gamma (`cv56`).
-* Make CYRILLIC {CAPITAL|SMALL} LETTER STRAIGHT U (`U+04AE`..`U+04B1`) follow variants of Cyrillic Capital/Small U (`cv77`..`cv78`).
-* Make the terminal of {LATIN|CYRILLIC} {CAPITAL|SMALL} LETTER SCHWA (`U+018F`, `U+0259`, `U+04D8`..`U+04D9`) a full hook under italics to match CYRILLIC {CAPITAL|SMALL} LETTER E (`U+042D`, `U+044D`).
-* Quasi-proportional will now use `cyrl-ef` = `split-serifless`, `cyrl-ef` = `split-serifed`, and `cyrl-ef` = `split-cursive` for Aile, Etoile upright, and Etoile italic respectively.
-
-
-### 29.1.0
-
-* Add support for naming override (#2275).
-* Fix broken glyphs for serifed variants of LATIN SMALL LETTER S WITH CURL (`U+1DF1E`).
-* Improve glyph visual for Bulgarian localization form for CYRILLIC CAPITAL LETTER EF (`U+0424`) under slab.
-* Make descender serif of CYRILLIC {CAPITAL|SMALL} LETTER KOPPA (`U+0480`..`U+0481`) appear under any serifed variants for `C`/`c`.
-* Make presence of descender serif automatic for LATIN CAPTITAL LETTER BETA (`U+A7B4`).
-* Remove tailless variants for TURNED GREEK SMALL LETTER IOTA (`U+2129`).
-* Make presence of top-right serif automatic for CYRILLIC SMALL LIGATURE EN GHE (`U+04A5`) under `cyrl/en`=`tailed-top-left-serifed`.
-* Fix broken geometry of tailed `i`/`l` under heavy oblique quasi-proportional.
-* Make Cyrillic Lower Em (`cv74`) use `flat-bottom-serifless` for sans and `flat-bottom-serifed` for slab by default.
-* Make Latin-1 Macron (`U+00AF`) slightly wider.
+* \[**Breaking**\] Remove support for RIS characters (U+1F1E6..U+1F1FF) as they conflict with Emojis.
+* Iosevka private characters moved to U+F880..U+F8FF range.
 * Add characters:
-  - MODIFIER LETTER LOWER RIGHT CORNER ANGLE (`U+A71A`).
-
-
-### 29.0.5
-
-* Fix side bearings of multi-dot punctuation (`U+10FB`, `U+2056`, `U+2058`..`205B`, `U+2E2A`..`U+2E2D`) under Quasi-Proportional.
-* Fix mapping of DENSE VERTICAL FILL (`U+1CC44`) and DENSE HORIZONTAL FILL (`U+1CC45`).
-* Fix glyph visuals:
-  - MATHEMATICAL RISING DIAGONAL (`U+27CB`).
-  - MATHEMATICAL FALLING DIAGONAL (`U+27CD`).
-  - CIRCLE WITH HORIZONTAL BAR (`U+29B5`).
-  - SOLIDUS WITH OVERBAR (`U+29F6`).
-  - SMALL VEE WITH UNDERBAR (`U+2A61`).
-* Add characters:
-  - LOWER RIGHT CORNER WITH DOT (`U+27D3`).
-  - UPPER LEFT CORNER WITH DOT (`U+27D4`).
-  - UP-POINTING GO-KART (`U+1CC00`) ... VERTICAL RESISTOR SEGMENT (`U+1CC0A`)  (Proposed for Unicode 16; L2/21-235).
-  - LEFT-POINTING DIODE (`U+1CC0E`) ... VERTICAL CAPACITOR (`U+1CC14`)  (Proposed for Unicode 16; L2/21-235).
-  - LOGIC GATE INVERTED INPUTS (`U+1CC17`) ... LOGIC GATE BUFFER WITH INVERTED INPUT (`U+1CC1A`)  (Proposed for Unicode 16; L2/21-235).
-  - LEFT-POINTING ENERGY WAVE (`U+1CC78`) ... DOWN-POINTING ENERGY WAVE (`U+1CC7B`)  (Proposed for Unicode 16; L2/21-235).
-  - WHITE LOWER LEFT POINTER (`U+1CC86`)  (Proposed for Unicode 16; L2/21-235).
-  - WHITE LOWER RIGHT POINTER (`U+1CC87`)  (Proposed for Unicode 16; L2/21-235).
-  - TWO RINGS ALIGNED HORIZONTALLY (`U+1CC88`)  (Proposed for Unicode 16; L2/21-235).
-  - LEFT-POINTING RACING CAR (`U+1CC97`) ... VERTICAL GO-KART (`U+1CC9D`)  (Proposed for Unicode 16; L2/21-235).
-  - TOP LEFT BLACK LEFT-POINTING SMALL TRIANGLE (`U+1CE07`)  (Proposed for Unicode 16; L2/21-235).
-* Add APL form for WHITE DIAMOND (`U+25C7`).
-
-
-### 29.0.4
-
-* Make `U+2980` respond to `VSAM`.
-  - `U+2AFC` will no longer respond to `VSAM`.
-
-
-### 29.0.3
-
-* Fix height of block quadrants (`U+2596`..`U+259F`) (#2240).
-* Fix the design of the ESTIMATED SYMBOL (`U+212E`) to match its spec (#2243).
-* Refine design of POWER SYMBOL (`U+23FB`) and HEAVY CHECK MARK (`U+2714`) (#2243).
-* Make `U+1FBBD`..`U+1FBBF` narrow by default.
-* Make LATIN {CAPITAL|SMALL} LETTER GHA (`U+01A2`..`U+01A3`) respond to variants of `q` (`cv41`).
-* Make the behavior of serifs of `U+027F` automatic.
-* Fix side bearings of `U+29E2` under Quasi-Proportional.
-* Fix width of PUNCTUATION SPACE (`U+2008`) under Quasi-Proportional.
-* Fix `percent`=`dots` glyphs for PER {MILLE|TEN THOUSAND} SIGN (`U+2030`..`U+2031`) under Quasi-Proportional when `NWID` is enabled.
-* Remove untagged variant selector for Cyrillic Capital Ef (`Ф`).
-* Fix glyph visual for COMBINING DOUBLE CIRCUMFLEX ABOVE (`U+1DCD`).
-* Fix variant assignment of `cv92` for `ss08` under slab.
-* Make `--c-like-chaining--` ligation group require at least three hyphen-minuses for hyphen chain.
-
-
-### 29.0.2
-
-* Add characters:
-  - SYMBOL FOR DELETE SQUARE CHECKER BOARD FORM (`U+2427`)  (Proposed for Unicode 16; L2/21-235).
-  - SYMBOL FOR DELETE RECTANGULAR CHECKER BOARD FORM (`U+2428`)  (Proposed for Unicode 16; L2/21-235).
-  - LEFT-POINTING STICK FIGURE (`U+1CC02`)  (Proposed for Unicode 16; L2/21-235).
-  - RIGHT-POINTING STICK FIGURE (`U+1CC03`)  (Proposed for Unicode 16; L2/21-235).
-  - DOWN-POINTING STICK FIGURE (`U+1CC04`)  (Proposed for Unicode 16; L2/21-235).
-  - UPPER LEFT TWELFTH CIRCLE (`U+1CC30`) ... DENSE HORIZONTAL FILL (`U+1CC45`)  (Proposed for Unicode 16; L2/21-235).
-  - SQUARE SPIRAL FROM TOP LEFT (`U+1CC7C`) ... HORIZONTAL LADDER (`U+1CC85`)  (Proposed for Unicode 16; L2/21-235).
-  - RIGHT HALF AND LEFT HALF WHITE CIRCLE (`U+1CE00`)  (Proposed for Unicode 16; L2/21-235).
-  - LOWER HALF AND UPPER HALF WHITE CIRCLE (`U+1CE01`)  (Proposed for Unicode 16; L2/21-235).
-  - UPPER HALF HEAVY WHITE SQUARE (`U+1CE03`)  (Proposed for Unicode 16; L2/21-235).
-  - LOWER HALF HEAVY WHITE SQUARE (`U+1CE04`)  (Proposed for Unicode 16; L2/21-235).
-  - HEAVY WHITE SQUARE CONTAINING BLACK VERY SMALL SQUARE (`U+1CE05`)  (Proposed for Unicode 16; L2/21-235).
-  - TOP JUSTIFIED LOWER HALF WHITE CIRCLE (`U+1FBE0`) ... LEFT JUSTIFIED RIGHT HALF WHITE CIRCLE (`U+1FBE3`)  (Proposed for Unicode 16; L2/21-235).
-  - TOP JUSTIFIED LOWER HALF BLACK CIRCLE (`U+1FBE8`) ... TOP LEFT JUSTIFIED LOWER RIGHT QUARTER BLACK CIRCLE (`U+1FBEF`)  (Proposed for Unicode 16; L2/21-235).
-* Quasi-proportional will now use `four` = `closed-serifless` and `four` = `closed-serifed` for Aile and Etoile respectively.
-
-
-### 29.0.1
-
-* Fix broken `s`/`t` variants for `U+01BE`. (#2223).
-* Fix precomposed iota with double marks (#2229).
-* Fix leaning mark placement on letters around i/l.
-* Fix sans-serif linking for `U+2781`..`U+2784` and `U+278B`..`U+278E`.
-
-
-### 29.0.0
-
-* \[**BREAKING**\] Add separate serifed variants for digits `2` through `5`. As a result, current variants are partially renamed and reordered (#1965). Change of variant names:
-  - `two`.`straight-neck` → `two`.`straight-neck-serifless`
-  - `two`.`curly-neck` → `two`.`curly-neck-serifless`
-  - `three`.`flat-top` → `three`.`flat-top-serifless`
-  - `four`.`closed` → `four`.`closed-serifless`
-  - `four`.`closed-non-crossing` → `four`.`closed-non-crossing-serifless`
-  - `four`.`semi-open` → `four`.`semi-open-serifless`
-  - `four`.`semi-open-non-crossing` → `four`.`semi-open-non-crossing-serifless`
-  - `four`.`open` → `four`.`open-serifless`
-  - `four`.`open-non-crossing` → `four`.`open-non-crossing-serifless`
-  - `five`.`upright-arched` → `five`.`upright-arched-serifless`
-  - `five`.`upright-flat` → `five`.`upright-flat-serifless`
-  - `five`.`oblique-arched` → `five`.`oblique-arched-serifless`
-  - `five`.`oblique-flat` → `five`.`oblique-flat-serifless`
-* \[**BREAKING**\] Reorder of glyph variants:
-   - Influenced characters: `I`, `U`, `Z`, `i`, `l`, `u`, `z`, Greek Lower Mu (`μ`), Micro Sign (`µ`).
-* \[**BREAKING**\] Quasi-proportional will now use a six-unit system instead of four. Metrics of various letters (`f`, `t`, `r`, `m`, `w`, etc.) are adjusted.
-* Add characters:
-  - UPWARDS WHITE ARROW FROM BAR (`U+21EA`) ... RIGHTWARDS WHITE ARROW FROM WALL (`U+21F0`).
-  - RETURN SYMBOL (`U+23CE`).
-  - SYMBOL FOR DELETE MEDIUM SHADE FORM  (`U+2429`).
-  - GEAR WITHOUT HUB (`U+26ED`).
-  - GEAR WITH HANDLES (`U+26EE`).
-  - MAP SYMBOL FOR LIGHTHOUSE (`U+26EF`).
-  - THREE-D TOP-LIGHTED RIGHTWARDS ARROWHEAD (`U+27A2`).
-  - THREE-D BOTTOM-LIGHTED RIGHTWARDS ARROWHEAD (`U+27A3`).
-  - SHUFFLE PRODUCT (`U+29E2`).
-  - GLEICH STARK (`U+29E6`).
-  - INTERIOR PRODUCT (`U+2A3C`).
-  - RIGHTHAND INTERIOR PRODUCT (`U+2A3D`).
-  - SHORT LEFT TACK (`U+2ADE`) ... SHORT UP TACK (`U+2AE0`).
-  - VERTICAL BAR TRIPLE RIGHT TURNSTILE (`U+2AE2`) ... REVERSED DOUBLE STROKE NOT SIGN (`U+2AED`).
-  - UPWARDS WHITE ARROW FROM BAR WITH HORIZONTAL BAR (`U+2BB8`).
-  - LEFT RAISED OMISSION BRACKET (`U+2E0C`).
-  - RIGHT RAISED OMISSION BRACKET (`U+2E0C`).
-  - LEFT LOW PARAPHRASE BRACKET (`U+2E1C`).
-  - RIGHT LOW PARAPHRASE BRACKET (`U+2E1C`).
-  - LOWER HORIZONTAL RULER SEGMENT (`U+1CC05`)  (Proposed for Unicode 16; L2/21-235).
-  - RIGHT VERTICAL RULER SEGMENT (`U+1CC06`)  (Proposed for Unicode 16; L2/21-235).
-  - LOWER RIGHT RULER SEGMENT (`U+1CC07`)  (Proposed for Unicode 16; L2/21-235).
-  - BOX DRAWINGS LIGHT HORIZONTAL AND UPPER RIGHT (`U+1CC1B`) ... SEPARATED BLOCK QUADRANT-1234 (`U+1CC2F`)  (Proposed for Unicode 16; L2/21-235).
-  - EIGHT RAYS INWARD (`U+1CC69`) ... BLACK NEUTRAL FACE (`U+1CC6F`)  (Proposed for Unicode 16; L2/21-235).
-  - SQUARE FOUR CORNER SALTIRES (`U+1CC89`) ... INVERSE BLACK DIAMOND (`U+1CC8D`)  (Proposed for Unicode 16; L2/21-235).
-  - VERTICAL LINE WITH FOUR TICK MARKS (`U+1CC90`)  (Proposed for Unicode 16; L2/21-235).
-  - HORIZONTAL LINE WITH FOUR TICK MARKS (`U+1CC91`)  (Proposed for Unicode 16; L2/21-235).
-  - WHITE VERTICAL RECTANGLE WITH HORIZONTAL BAR (`U+1CE06`)  (Proposed for Unicode 16; L2/21-235).
-  - BOX DRAWINGS DOUBLE DIAGONAL LOWER LEFT TO MIDDLE CENTRE TO LOWER RIGHT (`U+1CE09`)  (Proposed for Unicode 16; L2/21-235).
-  - BOX DRAWINGS DOUBLE DIAGONAL UPPER LEFT TO MIDDLE CENTRE TO UPPER RIGHT (`U+1CE0A`)  (Proposed for Unicode 16; L2/21-235).
-  - SEPARATED BLOCK SEXTANT-1 (`U+1CE51`) ... SEPARATED BLOCK SEXTANT-123456 (`U+1CE8F`)  (Proposed for Unicode 16; L2/21-235).
-  - UPPER LEFT ONE SIXTEENTH BLOCK (`U+1CE90`) ... LOWER HALF RIGHT ONE QUARTER BLOCK (`U+1CEAF`)  (Proposed for Unicode 16; L2/21-235).
-  - FOLDER (`U+1F5C0`) (#2181).
-  - DOWNWARDS BLACK ARROW TO BAR (`U+1F8B3`) ... SOUTH WEST ARROW FROM BAR (`U+1F8BB`)  (Proposed for Unicode 16; L2/21-235).
-  - RAISED LEFT SMALL SQUARE BRACKET (`U+1FBCC`)  (Proposed for Unicode 16; L2/21-235).
-  - LEFT TWO THIRDS BLOCK (`U+1FBCE`)  (Proposed for Unicode 16; L2/21-235).
-  - LEFT ONE THIRD BLOCK (`U+1FBCF`)  (Proposed for Unicode 16; L2/21-235).
-  - BOX DRAWINGS LIGHT DIAGONAL MIDDLE RIGHT TO LOWER LEFT (`U+1FBD0`) ... BOX DRAWINGS LIGHT DIAGONAL UPPER LEFT TO MIDDLE RIGHT TO LOWER LEFT (`U+1FBDF`)  (Proposed for Unicode 16; L2/21-235).
-  - UPPER CENTRE ONE QUARTER BLOCK (`U+1FBE4`) ... MIDDLE RIGHT ONE QUARTER BLOCK (`U+1FBE7`)  (Proposed for Unicode 16; L2/21-235).
-* Fix a disjoint stroke of Outlined Curly `Z` under some weights (#2195).
-* Unify diagonal box drawings' angles (#2197).
-* Fix Large Type Piece `U+1CE3B` (#2206).
-* Added a `MOSC` feature that turns certain geometric shapes into mosaics (#2212).
-* Fix `frac` feature for better recognizing fraction patterns (#2214).
-* Fix broken shape of `U+1FB95`, `U+1FB96` and `U+1FB97` (#2218). 
-* Increase weight for `U+276E`/`U+276F` (#2217).
-* Fix ligation for `[|]` (#2221).
+  - UNCERTAINTY SIGN (`U+2BD1`) (#2976).
+  - Z NOTATION SCHEMA PIPING (`U+2A20`).
+  - Z NOTATION SCHEMA PROJECTION (`U+2A21`).
+* Add `straight-vertical-sides-almost-flat-top` and `rounded-vertical-sides-almost-flat-top` variants for `W` and `w`.
+* Add `flat-hook` variants for `5`.
+* Add serifed variants for Greek lowercase nu (`U+03BD`) (#2721).
+* Add IPA localization form for MODIFIER LETTER CAPITAL H WITH STROKE (`U+A7F8`).
+* Refine shape of the following characters:
+  - LATIN CAPITAL LETTER THORN (`U+00DF`).
+  - LATIN CAPITAL LETTER GHA (`U+01A2`).
+  - LATIN SMALL LETTER GHA (`U+01A3`).
+  - LATIN SMALL LETTER EZH REVERSED (`U+0189`).
+  - LATIN SMALL LETTER EZH WITH CARON (`U+01EF`).
+  - LATIN SMALL LETTER GLOTTAL STOP (`U+0242`).
+  - LATIN SMALL LETTER LEZH (`U+026E`).
+  - LATIN SMALL LETTER EZH (`U+0292`).
+  - LATIN SMALL LETTER DEZH DIGRAPH (`U+02A4`).
+  - GREEK CAPITAL LETTER SHO (`U+03F7`).
+  - CYRILLIC CAPITAL LETTER EF (`U+0424`).
+  - CYRILLIC CAPITAL LETTER YU (`U+042E`).
+  - CYRILLIC SMALL LETTER EF (`U+0444`).
+  - CYRILLIC SMALL LETTER YU (`U+044E`).
+  - CYRILLIC CAPITAL LETTER YAT (`U+0462`).
+  - CYRILLIC SMALL LETTER YAT (`U+0463`).
+  - CYRILLIC CAPITAL LETTER IOTIFIED LITTLE YUS (`U+0468`).
+  - CYRILLIC SMALL LETTER IOTIFIED LITTLE YUS (`U+0469`).
+  - CYRILLIC CAPITAL LETTER IOTIFIED BIG YUS (`U+046C`).
+  - CYRILLIC SMALL LETTER IOTIFIED BIG YUS (`U+046D`).
+  - CYRILLIC SMALL LETTER ABKHASIAN DZE (`U+04E1`).
+  - MODIFIER LETTER SMALL EZH (`U+1DBE`).
+  - BOTTOM RIGHT CROP (`U+230C`) ... TOP LEFT CROP (`U+230F`) (#2989).
+  - MALE SIGN (`U+2642`).
+  - COMBINING CYRILLIC LETTER YAT (`U+2DFA`).
+  - COMBINING CYRILLIC CYRILLIC LETTER YU (`U+2DFB`).
+  - COMBINING CYRILLIC LETTER IOTIFIED BIG YUS (`U+2DFF`).
+  - CYRILLIC CAPITAL LETTER IOTIFIED YAT (`U+A652`) ... CYRILLIC CAPITAL LETTER IOTIFIED A (`U+A656`).
+  - CYRILLIC CAPITAL LETTER IOTIFIED CLOSED LITTLE YUS (`U+A65C`).
+  - CYRILLIC SMALL LETTER IOTIFIED CLOSED LITTLE YUS (`U+A65D`).
+  - COMBINING CYRILLIC LETTER EF (`U+A69E`).
+  - LATIN CAPITAL LETTER THORN WITH STROKE (`U+A764`).
+  - LATIN CAPITAL LETTER THORN WITH STROKE THROUGH DESCENDER (`U+A766`).
+  - LATIN SMALL LETTER PHARYNGEAL VOICED FRICATIVE (`U+A7CF`).
+  - MODIFIER LETTER DEZH DIGRAPH (`U+1078A`)
+  - MODIFIER LETTER SMALL LEZH (`U+1079E`).
+  - LATIN SMALL LETTER DEZH DIGRAPH WITH PALATAL HOOK (`U+1DF12`).
+  - LATIN SMALL LETTER EZH WITH PALATAL HOOK (`U+1DF18`).
+  - MODIFIER LETTER CYRILLIC SMALL EF (`U+1E042`).
+  - MODIFIER LETTER CYRILLIC SMALL YU (`U+1E049`).
+  - CYRILLIC SUBSCRIPT SMALL LETTER EF (`U+1E060`).
 

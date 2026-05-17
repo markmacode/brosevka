@@ -17,10 +17,10 @@ class BooleImpl {
 			const g1 = new Glyph();
 			g1.gizmo = forwardGizmo;
 			g1.include(operand);
-			operandGeometries.push(new TransformedGeometry(backwardGizmo, g1.geometry));
+			operandGeometries.push(TransformedGeometry.create(backwardGizmo, g1.geometry));
 		}
 		return glyph.includeGeometry(
-			new TransformedGeometry(
+			TransformedGeometry.create(
 				forwardGizmo,
 				new BooleanGeometry(this.operator, operandGeometries),
 			),
@@ -29,14 +29,16 @@ class BooleImpl {
 }
 export function SetupBuilders(bindings) {
 	const union = (...operands) =>
-		new BooleImpl(bindings, TypoGeom.Boolean.ClipType.ctUnion, operands);
+		new BooleImpl(bindings, TypoGeom.Boolean.ClipType.Union, operands);
 	const intersection = (...operands) =>
-		new BooleImpl(bindings, TypoGeom.Boolean.ClipType.ctIntersection, operands);
+		new BooleImpl(bindings, TypoGeom.Boolean.ClipType.Intersection, operands);
 	const difference = (...operands) =>
-		new BooleImpl(bindings, TypoGeom.Boolean.ClipType.ctDifference, operands);
+		new BooleImpl(bindings, TypoGeom.Boolean.ClipType.Difference, operands);
+	const withKnockout = (mask, ...operands) => difference(union(...operands), mask);
 	return {
 		union: union,
 		intersection: intersection,
 		difference: difference,
+		"with-knockout": withKnockout,
 	};
 }

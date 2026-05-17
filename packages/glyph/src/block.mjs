@@ -1,3 +1,5 @@
+import { Glyph } from "./glyph.mjs";
+
 export class GlyphBuildExecutor {
 	constructor(recursiveBuildFilter) {
 		this.recursiveBuildFilter = recursiveBuildFilter;
@@ -32,6 +34,9 @@ export class GlyphBuildExecutor {
 		this.glyphBlockStore[id] = block;
 		this.pendingGlyphBlocks.push(block);
 	}
+	release() {
+		this.dependencyManager.release();
+	}
 }
 
 export class RecursiveBuildFilter {
@@ -47,9 +52,13 @@ export class RecursiveBuildFilter {
 	}
 }
 
+const DEP_TRAVERSE_PENDING = 1,
+	DEP_TRAVERSE_CHECKED = 2;
+
 export class DependencyManager {
 	constructor() {
 		this.glyphToGlyph = new WeakMap();
+		this.glyphToGlyphVariant = new WeakMap();
 		this.glyphToBlock = new WeakMap();
 		this.blockToGlyph = new Map();
 	}
@@ -58,6 +67,14 @@ export class DependencyManager {
 		if (!s) {
 			s = new Set();
 			this.glyphToGlyph.set(dependent, s);
+		}
+		s.add(dependency);
+	}
+	addVariantDependency(dependent, dependency) {
+		let s = this.glyphToGlyphVariant.get(dependent);
+		if (!s) {
+			s = new Set();
+			this.glyphToGlyphVariant.set(dependent, s);
 		}
 		s.add(dependency);
 	}
@@ -82,62 +99,74 @@ export class DependencyManager {
 		return false;
 	}
 
-	traverseGlyphDependenciesImpl(glyphs, fBlockwiseExpand) {
-		let state = new Map();
-		const PENDING = 1,
-			CHECKED = 2;
-
-		for (const glyph of glyphs) state.set(glyph, PENDING);
-
-		// When fBlockwiseExpand is true, we need to expand the initial glyph set
-		// to include all glyphs in the same block.
-		if (fBlockwiseExpand) {
-			let blocks = new Set();
-			for (const glyph of glyphs) {
-				let b = this.glyphToBlock.get(glyph);
-				if (b) blocks.add(b);
-			}
-			for (const b of blocks) {
-				const glyphs = this.blockToGlyph.get(b);
-				if (glyphs) {
-					for (const g of glyphs) state.set(g, PENDING);
-				}
-			}
-		}
-
-		// Traverse the dependency graph
-		for (;;) {
-			let found = false;
-			for (const [glyph, s] of state) {
-				if (s !== PENDING) continue;
-				const deps = this.glyphToGlyph.get(glyph);
-				if (deps) {
-					for (const g of deps) state.set(g, PENDING);
-					found = true;
-				}
-				state.set(glyph, CHECKED);
-			}
-			if (!found) break;
-		}
-
-		return state;
-	}
-
 	traverseDependencies(glyphs) {
 		const gGlyphGraph = this.traverseGlyphDependenciesImpl(glyphs, false);
 		const gBlockGraph = this.traverseGlyphDependenciesImpl(glyphs, true);
 
-		let glyphIdFilter = new Set();
-		let blockIdFilter = new Set();
+		const glyphIdFilter = new Set();
+		const blockIdFilter = new Set();
 		for (const g of gGlyphGraph.keys()) {
 			if (g.identifier) glyphIdFilter.add(g.identifier);
 		}
 		for (const g of gBlockGraph.keys()) {
-			let b = this.glyphToBlock.get(g);
+			const b = this.glyphToBlock.get(g);
 			if (b) blockIdFilter.add(b);
 		}
 
 		return new RecursiveBuildFilter(glyphIdFilter, blockIdFilter);
+	}
+
+	traverseGlyphDependenciesImpl(glyphs, fBlockwiseExpand) {
+		const state = new Map();
+		for (const glyph of glyphs) if (glyph) state.set(glyph, DEP_TRAVERSE_PENDING);
+
+		for (let cycle = 0; cycle < 64; cycle++) {
+			const szBefore = state.size;
+			this.expandeByVariants(state);
+			if (fBlockwiseExpand) this.blockwiseExpandGlyphs(state);
+			this.traverseDirectDependenciesImpl(state);
+			if (state.size === szBefore) break;
+		}
+
+		return state;
+	}
+	expandeByVariants(state) {
+		for (const glyph of state.keys()) {
+			const vs = this.glyphToGlyphVariant.get(glyph);
+			if (!vs) continue;
+			for (const v of vs) if (v && !state.has(v)) state.set(v, DEP_TRAVERSE_PENDING);
+		}
+	}
+	blockwiseExpandGlyphs(state) {
+		const blocks = new Set();
+		for (const glyph of state.keys()) {
+			const b = this.glyphToBlock.get(glyph);
+			if (b) blocks.add(b);
+		}
+		for (const b of blocks) {
+			const glyphs = this.blockToGlyph.get(b);
+			if (!glyphs) continue;
+			for (const g of glyphs) if (g && !state.has(g)) state.set(g, DEP_TRAVERSE_PENDING);
+		}
+	}
+	traverseDirectDependenciesImpl(state) {
+		// Traverse the dependency graph
+		for (let cycle = 0; cycle < 64; cycle++) {
+			let found = false;
+			for (const [glyph, s] of state) {
+				if (s !== DEP_TRAVERSE_PENDING) continue;
+				const deps = this.glyphToGlyph.get(glyph);
+				if (deps) {
+					for (const g of deps) if (g) state.set(g, DEP_TRAVERSE_PENDING);
+					found = true;
+				}
+				state.set(glyph, DEP_TRAVERSE_CHECKED);
+			}
+			if (!found) break;
+		}
+	}
+	release() {
+		this.blockToGlyph.clear();
 	}
 }
 
@@ -151,8 +180,8 @@ export class GlyphBlock {
 		this.exports = {};
 	}
 	resolve() {
-		if (this.resolved == 2) return this.exports;
-		if (this.resolved == 1) throw new Error(`Circular dependency detected: ${this.id}`);
+		if (this.resolved === 2) return this.exports;
+		if (this.resolved === 1) throw new Error(`Circular dependency detected: ${this.id}`);
 		this.resolved = 1;
 
 		const prevBlockName = this.execState.currentBlockId;
@@ -172,5 +201,69 @@ export class GlyphBlock {
 		this.execState.currentBlockId = prevBlockName;
 		this.resolved = 2;
 		return this.exports;
+	}
+}
+
+/// The class used to handle glyph saving.
+export class GlyphSaveSink {
+	constructor(exec, metrics, store) {
+		this.exec = exec;
+		this.metrics = metrics;
+		this.glyphStore = store;
+	}
+
+	glyphIsNeeded(name) {
+		return (
+			!this.exec.recursiveBuildFilter || this.exec.recursiveBuildFilter.glyphIsNeeded(name)
+		);
+	}
+
+	saveFalse($1, $2, contents) {
+		return this.saveImpl(true, $1, $2, contents);
+	}
+	save($1, $2, contents) {
+		return this.saveImpl(false, $1, $2, contents);
+	}
+
+	saveImpl(fForce, $1, $2, contents) {
+		// Figure out the glyph name and unicode to save
+		let saveGlyphName = null;
+		let unicode = null;
+		if ($1 && typeof $1 === "string") {
+			saveGlyphName = $1;
+			unicode = $2 || 0;
+		} else if ($1 && typeof $1 === "number") {
+			saveGlyphName = `uni${$1.toString(16).padStart(4, "0").toUpperCase()}`;
+			unicode = $1;
+		}
+
+		// If we are in a recursive build run, and the glyph is not needed, skip it
+		if (!fForce && saveGlyphName && !this.glyphIsNeeded(saveGlyphName)) return;
+
+		// Create the glyph object & include the contents
+		const glyphObject = new Glyph(saveGlyphName);
+		glyphObject.setWidth(this.metrics.Width);
+		glyphObject.gizmo = this.metrics.GlobalTransform;
+		glyphObject._m_dependencyManager = this.exec.dependencyManager;
+
+		glyphObject.include(contents, true, true);
+
+		// Set the glyph-to-block dependency
+		this.exec.setGlyphToBlockDependency(glyphObject);
+
+		// Save the glyph if requested
+		if (saveGlyphName) {
+			if (this.glyphStore.queryByName(saveGlyphName)) {
+				throw new Error(`Duplicate glyph: ${saveGlyphName}`);
+			}
+
+			this.glyphStore.addGlyph(saveGlyphName, glyphObject);
+			if (unicode) {
+				const u = typeof unicode === "string" ? unicode.codePointAt(0) : unicode;
+				this.glyphStore.encodeGlyph(u, glyphObject);
+			}
+		}
+
+		return glyphObject;
 	}
 }

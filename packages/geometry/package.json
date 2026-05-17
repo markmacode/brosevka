@@ -1,6 +1,6 @@
 {
   "name": "@iosevka/geometry",
-  "version": "29.2.1",
+  "version": "34.5.0",
   "private": true,
   "exports": {
     ".": "./src/index.mjs",
@@ -10,11 +10,14 @@
     "./curve-util": "./src/curve-util.mjs",
     "./point": "./src/point.mjs",
     "./transform": "./src/transform.mjs",
-    "./spiro-control": "./src/spiro-control.mjs"
+    "./spiro-control": "./src/spiro-control.mjs",
+    "./spiro-expand": "./src/spiro-expand.mjs",
+    "./spiro-pen-expand": "./src/spiro-pen-expand.mjs",
+    "./encoding": "./src/encoding.mjs"
   },
   "dependencies": {
-    "@iosevka/util": "29.2.1",
+    "@iosevka/util": "34.5.0",
     "spiro": "^3.0.1",
-    "typo-geom": "^0.15.1"
+    "typo-geom": "^0.20.1"
   }
 }

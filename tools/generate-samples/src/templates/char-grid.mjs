@@ -1,9 +1,14 @@
-import * as themes from "../themes/index.mjs";
+import themes from "../themes/index.mjs";
 
 export default CharGrid;
 
 function CharGrid(args) {
 	const theme = themes[args.theme];
+	const udatMap = args.udatMap;
+	const gcMap = new Map();
+	for (const [ch, gc, _name] of udatMap) {
+		gcMap.set(ch, gc);
+	}
 
 	const EM = 48;
 	const ITEMS_PER_ROW = 16;
@@ -11,7 +16,7 @@ function CharGrid(args) {
 	const ITEM_SIZE = 1.5;
 
 	let rows = 0;
-	let frames = [];
+	const frames = [];
 	for (let offset = 0; offset < ITEMS_PER_ROW; offset++) {
 		frames.push({
 			"horizontal-align": "center",
@@ -45,12 +50,14 @@ function CharGrid(args) {
 					{ "font-weight": 600 },
 					{ "font-size": 0.5 * EM },
 					{ color: theme.body },
-					"U+" + char.lch.toString(16).toUpperCase().padStart(4, "0"),
+					`U+${char.lch.toString(16).toUpperCase().padStart(4, "0")}`,
 				],
 			});
 		}
 
-		const isMark = char.inFont && char.gc === "Nonspacing_Mark";
+		const isMark =
+			char.inFont &&
+			(gcMap.get(char.lch) === "Nonspacing_Mark" || gcMap.get(char.lch) === "Enclosing_Mark");
 		const dimensions = {
 			"horizontal-align": "center",
 			"vertical-align": "center",
@@ -76,7 +83,7 @@ function CharGrid(args) {
 			contents: [
 				...fontSettings,
 				{ color: char.inFont ? theme.body : theme.dimmed },
-				char.inFont ? (isMark ? "\uE00E" : "") + String.fromCodePoint(char.lch) : "\uF00F",
+				char.inFont ? (isMark ? "\uf89E" : "") + String.fromCodePoint(char.lch) : "\uf880",
 			],
 		});
 	}

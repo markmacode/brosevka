@@ -8,18 +8,21 @@ glyph-module
 glyph-block Symbol-Punctuation-Emotion : begin
 	glyph-block-import CommonShapes
 	glyph-block-import Common-Derivatives
-	glyph-block-import Letter-Shared-Shapes : RetroflexHook
 
-	local emotionBottom : Math.max (CAP * 0.3) (DotSize * 1.5)
+	define emotionBottom : Math.max (CAP * 0.3) (DotSize * 1.5)
 
 	do "Exclamation"
+		glyph-block-import Letter-Shared : CreateTurnedLetter
+		glyph-block-import Letter-Shared-Shapes : RetroflexHook
+
 		foreach { suffix { DrawAt kdr overshoot } } [Object.entries DotVariants] : do
 			local dr : DotRadius * kdr
 			create-glyph "exclam.\(suffix)" : glyph-proc
-				local df : include : DivFrame para.diversityF
-				include : df.markSet.capital
+				local df : include : DivFrame para.advanceScaleI
 				include : VBar.m df.middle [clamp 0 (CAP * 0.4) (emotionBottom * 1.18)] CAP
 				include : DrawAt df.middle dr (dr - overshoot)
+				create-forked-glyph "alveolarClick.\(suffix)" : df.markSet.capital
+				create-forked-glyph "exclamDown.\(suffix)" : FlipAround df.middle (XH / 2)
 
 			create-glyph "question/dotPart.\(suffix)" : glyph-proc
 				set-width 0
@@ -32,11 +35,17 @@ glyph-block Symbol-Punctuation-Emotion : begin
 				set-mark-anchor 'cvDecompose' (0 - Width) 0
 
 		select-variant 'exclam' '!' (follow -- 'punctuationDot')
+		select-variant 'exclamDown' 0xA1 (follow -- 'punctuationDot')
+
 		select-variant 'question/dotPart' (follow -- 'punctuationDot')
 		select-variant 'questionDown/dotPart' (follow -- 'punctuationDot')
 
-		derive-glyphs 'retroflexClickHook' 0x1DF0A 'exclam' : function [src sel] : glyph-proc
-			local df : DivFrame para.diversityF
+		select-variant 'alveolarClick' 0x1C3 (follow -- 'diacriticDot')
+		CreateTurnedLetter 'alveolarPercussive'          null 'alveolarClick' HalfAdvance (XH  / 2)
+		CreateTurnedLetter 'alveolarPercussive/baseline' null 'alveolarClick' HalfAdvance (CAP / 2)
+
+		derive-glyphs 'alveolarClickRTail' 0x1DF0A 'alveolarClick' : function [src sel] : glyph-proc
+			local df : include : DivFrame para.advanceScaleI
 			include : df.markSet.capDesc
 			include : refer-glyph src
 			include : RetroflexHook.m
@@ -44,29 +53,25 @@ glyph-block Symbol-Punctuation-Emotion : begin
 				y -- 0
 				yAttach -- DotRadius
 
-		alias 'alveolarclick'       0x1C3 'exclam'
-		turned 'exclamDown'         0xA1  'exclam'  [DivFrame para.diversityF].middle (XH / 2)
-		turned 'alveolarpercussive' null  'exclam'  [DivFrame para.diversityF].middle (CAP / 2)
-
 	do "Question"
-		local [YConnectT top emotionBottom] : mix emotionBottom (top - HalfStroke) 0.375
+		define [YConnectT top emotionBottom] : mix emotionBottom (top - HalfStroke) 0.375
 
 		define [SmoothShape top emotionBottom left right] : glyph-proc
-			define strokeEndCor : Math.hypot 1 TanSlope
+			local strokeEndCor : Math.hypot 1 TanSlope
 			include : dispiro
 				widths.rhs
 				g4 left (top - Hook)
-				hookstart (top - O)
+				HookStart top
 				g4 right (top - ArchDepthB * 0.9)
 				alsoThru.g2 0.5 0.45 [widths.center EssQuestion]
 				straight.down.end ([mix left right 0.5] - [HSwToV HalfStroke] * strokeEndCor) emotionBottom [widths.lhs.heading (Stroke * strokeEndCor) Downward]
 
 		define [RevSmoothShape top emotionBottom left right] : glyph-proc
-			define strokeEndCor : Math.hypot 1 TanSlope
+			local strokeEndCor : Math.hypot 1 TanSlope
 			include : dispiro
 				widths.lhs
 				g4 right (top - Hook)
-				hookstart (top - O)
+				HookStart top
 				g4 left (top - ArchDepthA * 0.9)
 				alsoThru.g2 0.5 0.45 [widths.center EssQuestion]
 				straight.down.end ([mix left right 0.5] + [HSwToV HalfStroke] * strokeEndCor) emotionBottom [widths.rhs.heading (Stroke * strokeEndCor) Downward]
@@ -76,7 +81,7 @@ glyph-block Symbol-Punctuation-Emotion : begin
 			include : dispiro
 				widths.rhs
 				g4 left (top - Hook)
-				hookstart (top - O)
+				HookStart top
 				g4 (right - OX) [YSmoothMidR top (questionYConnect - Stroke) ArchDepthA ArchDepthB]
 				arcvh
 				straight.left.end [mix left right 0.5] (questionYConnect - Stroke) [heading Leftward]
@@ -87,7 +92,7 @@ glyph-block Symbol-Punctuation-Emotion : begin
 			include : dispiro
 				widths.lhs
 				g4 right (top - Hook)
-				hookstart (top - O)
+				HookStart top
 				g4 (left + OX) [YSmoothMidL top (questionYConnect - Stroke) ArchDepthA ArchDepthB]
 				arcvh
 				straight.right.end [mix left right 0.5] (questionYConnect - Stroke) [heading Rightward]
@@ -99,7 +104,7 @@ glyph-block Symbol-Punctuation-Emotion : begin
 			include : dispiro
 				widths.rhs
 				flat [mix left right 0.125] top [heading Rightward]
-				curl (right - depth - CorrectionOMidS) top
+				curl [Arch.adjust-x.top (right - depth)] top
 				archv
 				g4 (right - OX) [YSmoothMidR top (questionYConnect - Stroke) ArchDepthA ArchDepthB]
 				arcvh
@@ -112,7 +117,7 @@ glyph-block Symbol-Punctuation-Emotion : begin
 			include : dispiro
 				widths.lhs
 				flat [mix right left 0.125] top [heading Leftward]
-				curl (left + depth + CorrectionOMidS) top
+				curl [Arch.adjust-x.bot (left + depth)] top
 				archv
 				g4 (left + OX) [YSmoothMidL top (questionYConnect - Stroke) ArchDepthA ArchDepthB]
 				arcvh
@@ -173,3 +178,6 @@ glyph-block Symbol-Punctuation-Emotion : begin
 
 		select-variant 'interrobangDown/bodyPart' (follow -- 'question')
 		derive-composites 'gnaborretni'  0x2E18 'interrobangDown/bodyPart' 'questionDown/dotPart'
+
+		create-glyph 'mdfGlottalStop/base'    : composite-proc [MarkSet.capital] [refer-glyph 'question/hookPart.smooth']
+		create-glyph 'mdfRevGlottalStop/base' : composite-proc [MarkSet.capital] [refer-glyph 'revQuestion/hookPart.smooth']

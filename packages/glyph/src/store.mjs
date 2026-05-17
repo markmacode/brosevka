@@ -1,9 +1,9 @@
 export class GlyphStore {
 	constructor() {
 		this.nameForward = new Map();
-		this.nameBackward = new Map();
+		this.nameBackward = new WeakMap();
 		this.encodingForward = new Map();
-		this.encodingBackward = new Map();
+		this.encodingBackward = new WeakMap();
 	}
 	get size() {
 		return this.nameForward.size;
@@ -13,6 +13,11 @@ export class GlyphStore {
 	}
 	namedEntries() {
 		return this.nameForward.entries();
+	}
+	*namedEntriesWithFilter(fn) {
+		for (const [name, g] of this.nameForward.entries()) {
+			if (fn(name, g)) yield [name, g];
+		}
 	}
 	glyphNames() {
 		return this.nameForward.keys();
@@ -57,20 +62,7 @@ export class GlyphStore {
 	queryNameOf(g) {
 		return this.nameBackward.get(g);
 	}
-	deleteGlyph(g) {
-		const name = this.nameBackward.get(g);
-		this.nameBackward.delete(g);
-		if (name) this.nameForward.delete(g);
-		this.deleteUnicodeAssignmentsOf(g);
-	}
-	deleteGlyphByName(name) {
-		const g = this.nameForward.get(name);
-		this.nameForward.delete(g);
-		if (g) {
-			this.nameBackward.delete(g);
-			this.deleteUnicodeAssignmentsOf(g);
-		}
-	}
+
 	encodeGlyph(u, g) {
 		this.encodingForward.set(u, g);
 		let s = this.encodingBackward.get(g);
@@ -83,14 +75,24 @@ export class GlyphStore {
 	queryByUnicode(u) {
 		return this.encodingForward.get(u);
 	}
+	queryByUnicodeEnsured(u) {
+		const g = this.encodingForward.get(u);
+		if (!g) throw new Error(`Glyph for Unicode ${u} doesn't exist.`);
+		return g;
+	}
 	queryNameByUnicode(u) {
 		const g = this.queryByUnicode(u);
 		if (!g) return undefined;
 		return this.queryNameOf(g);
 	}
+	queryNameByUnicodeEnsured(u) {
+		const g = this.queryByUnicode(u);
+		if (!g) throw new Error(`Glyph for Unicode ${u} doesn't exist.`);
+		return this.queryNameOf(g);
+	}
 	queryUnicodeOf(g) {
 		const s = this.encodingBackward.get(g);
-		if (!s || !s.size) return null;
+		if (!s?.size) return null;
 		return s;
 	}
 	queryUnicodeOfName(name) {
@@ -102,10 +104,11 @@ export class GlyphStore {
 		return [...this.queryUnicodeOfName(name)];
 	}
 	deleteUnicodeAssignmentsOf(g) {
-		const s = this.nameBackward.get(g);
+		const s = this.encodingBackward.get(g);
 		if (s) for (const u of s) this.encodingForward.delete(u);
 		this.encodingBackward.delete(g);
 	}
+
 	filterByName(nameSet) {
 		const gs1 = new GlyphStore();
 		for (const [name, g] of this.nameForward) {

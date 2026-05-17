@@ -1,6 +1,6 @@
 $$include '../../meta/macros.ptl'
 
-import [mix linreg clamp fallback] from "@iosevka/util"
+import [mix linreg clamp fallback strokeOffset] from "@iosevka/util"
 import [DesignParameters] from "../../meta/aesthetics.mjs"
 
 glyph-module
@@ -8,7 +8,7 @@ glyph-module
 glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 	glyph-block-import CommonShapes
 	glyph-block-import Common-Derivatives
-	glyph-block-import Symbol-Geometric-Shared : GeometricDim UnicodeWeightGrade GeometricSizes ConvexPolygonOutline
+	glyph-block-import Symbol-Geometric-Shared : GeometricDim GeometricSizes ConvexPolygonOutline
 
 	define Geom : GeometricDim MosaicUnitWidth MosaicWidth
 	define Size : GeometricSizes Geom
@@ -136,12 +136,12 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 		StdBlackShape SquareShape 'blackSquare' 0x25A0
 		StdWhiteShape SquareShape 'whiteSquare' 0x25A1
 
-		StdWhiteShape SquareShape 'lightWhiteSquare'     0x1F78E {.sw [UnicodeWeightGrade 3 Geom.Scalar]}
-		StdWhiteShape SquareShape 'mediumWhiteSquare'    0x1F78F {.sw [UnicodeWeightGrade 5 Geom.Scalar]}
-		StdWhiteShape SquareShape 'boldWhiteSquare'      0x1F790 {.sw [UnicodeWeightGrade 7 Geom.Scalar]}
-		StdWhiteShape SquareShape 'heavyWhiteSquare'     0x1F791 {.sw [UnicodeWeightGrade 9 Geom.Scalar]}
-		StdWhiteShape SquareShape 'veryHeavyWhiteSquare' 0x1F792 {.sw [UnicodeWeightGrade 10 Geom.Scalar]}
-		StdWhiteShape SquareShape 'exHeavyWhiteSquare'   0x1F793 {.sw [UnicodeWeightGrade 11 Geom.Scalar]}
+		StdWhiteShape SquareShape 'lightWhiteSquare'     0x1F78E {.sw [UnicodeWeightGrade 300  Geom.Scalar GeometryStroke]}
+		StdWhiteShape SquareShape 'mediumWhiteSquare'    0x1F78F {.sw [UnicodeWeightGrade 500  Geom.Scalar GeometryStroke]}
+		StdWhiteShape SquareShape 'boldWhiteSquare'      0x1F790 {.sw [UnicodeWeightGrade 700  Geom.Scalar GeometryStroke]}
+		StdWhiteShape SquareShape 'heavyWhiteSquare'     0x1F791 {.sw [UnicodeWeightGrade 900  Geom.Scalar GeometryStroke]}
+		StdWhiteShape SquareShape 'veryHeavyWhiteSquare' 0x1F792 {.sw [UnicodeWeightGrade 1000 Geom.Scalar GeometryStroke]}
+		StdWhiteShape SquareShape 'exHeavyWhiteSquare'   0x1F793 {.sw [UnicodeWeightGrade 1100 Geom.Scalar GeometryStroke]}
 
 		StdBlackShape SquareShape 'blackLargeSquare' 0x2B1B Size.Large
 		StdBlackShape SquareShape 'blackMediumSquare' 0x25FC Size.Medium
@@ -161,7 +161,7 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 		StdWhiteContainingBlackShape SquareShape 'whiteSquareWithCenter' 0x25A3
 		StdWhiteContainingBlackShape SquareShape 'whiteSquareContainingBlackVerySmallSquare' 0x1F794 Size.TinyInner
 		StdWhiteContainingBlackShape SquareShape 'whiteSquareContainingBlackMediumSquare' 0x1F795 Size.MediumInner
-		StdWhiteContainingBlackShape SquareShape 'heavyWhiteSquareContainingBlackMediumSquare' 0x1CE05 : Object.assign Size.TinyInner {.sw [UnicodeWeightGrade 9 Geom.Scalar]}
+		StdWhiteContainingBlackShape SquareShape 'heavyWhiteSquareContainingBlackMediumSquare' 0x1CE05 : Object.assign Size.TinyInner {.sw [UnicodeWeightGrade 900 Geom.Scalar GeometryStroke]}
 
 		StdGeomTargetShape SquareShape 'squareTarget' 0x1F796
 
@@ -198,13 +198,13 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 			create-glyph [MangleName name] [MangleUnicode unicode] : glyph-proc
 				set-width Geom.Width
 				local space : Geom.Width * (1 - Size.Medium.size)
-				local offsetX : space * 0.45 * [if rev (-1) 1]
+				local offsetX : space * 0.45 * [if rev (-1) (+1)]
 				local offsetY : space * 0.45
 				include : union
 					with-transform [Translate (-offsetX) (-offsetY)] : refer-glyph : MangleName [if square1 'blackMediumSquare' 'whiteMediumSquare']
-					with-transform [Translate offsetX offsetY] : refer-glyph : MangleName [if square2 'blackMediumSquare' 'whiteMediumSquare']
+					with-transform [Translate (+offsetX) (+offsetY)] : refer-glyph : MangleName [if square2 'blackMediumSquare' 'whiteMediumSquare']
 
-		SquareOverlap 'overlapWWSquareRev' 0x29C9 1 0 0
+		SquareOverlap 'revOverlapWWSquare' 0x29C9 1 0 0
 		SquareOverlap 'overlapWWSquare' 0x2BBA 0 0 0
 		SquareOverlap 'overlapWBSquare' 0x2BBB 0 0 1
 		SquareOverlap 'overlapBBSquare' 0x2BBC 0 1 1
@@ -377,7 +377,7 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 		StdBlackShape DiamondFill 'blackCenteredDiamond' 0x2BC1 Size.Oblique
 
 		StdWhiteShape DiamondFill 'whiteDiamond' 0x25C7 Size.Oblique
-		StdWhiteShape DiamondFill 'whiteDiamondOperatorImpl' null [Object.assign {.} Size.Oblique {.sw ([Math.sqrt 2] * [AdviceStroke 4])}]
+		StdWhiteShape DiamondFill 'whiteDiamondOperatorImpl' null [Object.assign {.} Size.Oblique {.sw (Math.SQRT2 * [AdviceStroke 4])}]
 
 		StdBlackShape DiamondFill 'blackMediumDiamond' 0x2B25 Size.MediumOblique
 		StdBlackShape DiamondFill 'blackSmallDiamond' 0x2B29 Size.SmallOblique
@@ -393,27 +393,27 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 
 		StdGeomTargetShape DiamondFill 'diamondTarget' 0x1F79C Size.Oblique
 
-	do "Lonzenge"
-		define [LonzengeFill cx cy size] : spiro-outline
+	do "Lozenge"
+		define [LozengeFill cx cy size] : spiro-outline
 			corner cx (cy + size)
 			corner (cx + size * 2 / 3) cy
 			corner cx (cy - size)
 			corner (cx - size * 2 / 3) cy
 
-		StdBlackShape LonzengeFill 'blackLonzenge' 0x29EB Size.Oblique
-		ConvexWhitePolygon LonzengeFill 'whiteLonzenge' 0x25CA Size.Oblique
+		StdBlackShape LozengeFill 'blackLozenge' 0x29EB Size.Oblique
+		ConvexWhitePolygon LozengeFill 'whiteLozenge' 0x25CA Size.Oblique
 
-		StdBlackShape LonzengeFill 'blackMediumLonzenge' 0x2B27 Size.MediumOblique
-		StdBlackShape LonzengeFill 'blackSmallLonzenge' 0x2B2A Size.SmallOblique
+		StdBlackShape LozengeFill 'blackMediumLozenge' 0x2B27 Size.MediumOblique
+		StdBlackShape LozengeFill 'blackSmallLozenge' 0x2B2A Size.SmallOblique
 
-		ConvexWhitePolygon LonzengeFill 'whiteMediumLonzenge' 0x2B28 Size.MediumOblique
-		ConvexWhitePolygon LonzengeFill 'whiteSmallLonzenge' 0x2B2B Size.SmallOblique
+		ConvexWhitePolygon LozengeFill 'whiteMediumLozenge' 0x2B28 Size.MediumOblique
+		ConvexWhitePolygon LozengeFill 'whiteSmallLozenge' 0x2B2B Size.SmallOblique
 
-		StdBlackShape LonzengeFill 'blackTinyLonzenge' 0x1F79D Size.TinyOblique
-		StdBlackShape LonzengeFill 'blackVerySmallLonzenge' 0x1F79E Size.VerySmallOblique
-		StdBlackShape LonzengeFill 'blackMediumSmallLonzenge' 0x1F79F Size.MediumSmallOblique
+		StdBlackShape LozengeFill 'blackTinyLozenge' 0x1F79D Size.TinyOblique
+		StdBlackShape LozengeFill 'blackVerySmallLozenge' 0x1F79E Size.VerySmallOblique
+		StdBlackShape LozengeFill 'blackMediumSmallLozenge' 0x1F79F Size.MediumSmallOblique
 
-		ConvexPolygonWhiteContainingBlackShape LonzengeFill 'whiteLozengeContainingBlackSmallLozenge' 0x1F7A0 [Object.assign {.} Size.SmallInner Size.Oblique]
+		ConvexPolygonWhiteContainingBlackShape LozengeFill 'whiteLozengeContainingBlackSmallLozenge' 0x1F7A0 [Object.assign {.} Size.SmallInner Size.Oblique]
 
 	do "Square-lozenge"
 		define [SquareLozengeShape cx cy size] : begin
@@ -447,7 +447,7 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 				g4     [mix cx [mix cx (cx - size) 0.5] p] [mix cy [mix (cy + size) cy 0.5] p]
 				close
 
-		StdWhiteShape DiamondLazongeShape 'whiteConcaveSidedDiamond'  0x27E1 [Object.assign {.} Size.Oblique {.sw ([Math.sqrt 2] * [UnicodeWeightGrade 6 Geom.Scalar])}]
+		StdWhiteShape DiamondLazongeShape 'whiteConcaveSidedDiamond'  0x27E1 [Object.assign {.} Size.Oblique {.sw (Math.SQRT2 * [UnicodeWeightGrade 600 Geom.Scalar GeometryStroke])}]
 		StdBlackShape DiamondLazongeShape 'lightFourPointedBlackCusp' 0x2BCC Size.Oblique
 		StdWhiteShape DiamondLazongeShape 'whiteFourPointedBlackCusp' 0x2BCE Size.ObliqueSA
 
@@ -472,12 +472,12 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 		StdBlackShape CircleShape 'blackCircle' 0x25CF
 
 		StdWhiteShape CircleShape 'whiteCircle' 0x25CB
-		StdWhiteShape CircleShape 'mediumWhiteCircle'    0x1F785 {.sw [UnicodeWeightGrade 6 Geom.Scalar]}
-		StdWhiteShape CircleShape 'boldWhiteCircle'      0x1F786 {.sw [UnicodeWeightGrade 7 Geom.Scalar]}
-		StdWhiteShape CircleShape 'heavyWhiteCircle'     0x1F787 {.sw [UnicodeWeightGrade 9 Geom.Scalar]}
-		StdWhiteShape CircleShape 'veryHeavyWhiteCircle' 0x1F788 {.sw [UnicodeWeightGrade 10 Geom.Scalar]}
-		StdWhiteShape CircleShape 'exHeavyWhiteCircle'   0x1F789 {.sw [UnicodeWeightGrade 11 Geom.Scalar]}
-		StdWhiteShape CircleShape 'heavyLargeCircle'     0x2B55  [Object.assign {.sw [UnicodeWeightGrade 9 Geom.Scalar]} Size.Large]
+		StdWhiteShape CircleShape 'mediumWhiteCircle'    0x1F785 {.sw [UnicodeWeightGrade 600 Geom.Scalar GeometryStroke]}
+		StdWhiteShape CircleShape 'boldWhiteCircle'      0x1F786 {.sw [UnicodeWeightGrade 700 Geom.Scalar GeometryStroke]}
+		StdWhiteShape CircleShape 'heavyWhiteCircle'     0x1F787 {.sw [UnicodeWeightGrade 900 Geom.Scalar GeometryStroke]}
+		StdWhiteShape CircleShape 'veryHeavyWhiteCircle' 0x1F788 {.sw [UnicodeWeightGrade 1000 Geom.Scalar GeometryStroke]}
+		StdWhiteShape CircleShape 'exHeavyWhiteCircle'   0x1F789 {.sw [UnicodeWeightGrade 1100 Geom.Scalar GeometryStroke]}
+		StdWhiteShape CircleShape 'heavyLargeCircle'     0x2B55  [Object.assign {.sw [UnicodeWeightGrade 900 Geom.Scalar GeometryStroke]} Size.Large]
 
 		StdBlackShape CircleShape 'blackVerySmallCircle' null Size.VerySmall
 		StdBlackShape CircleShape 'blackSmallCircle' null Size.Small
@@ -488,6 +488,7 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 
 		StdWhiteShape CircleShape 'whiteVerySmallCircle' null Size.VerySmall
 		StdWhiteShape CircleShape 'whiteSmallCircle' null Size.Small
+		StdWhiteShape CircleShape 'whiteSlightlySmallCircle' null Size.SlightlySmall
 		StdWhiteShape CircleShape 'whiteMediumSmallCircle' 0x26AC Size.MediumSmall
 		StdWhiteShape CircleShape 'whiteMediumCircle' 0x26AA Size.Medium
 		StdWhiteShape CircleShape 'whiteLargeCircle' 0x25EF Size.Large
@@ -571,9 +572,17 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 		define [PentagramSw c] {.sw ([AdviceStroke c : Math.sqrt Geom.Scalar] * [Math.sqrt 5])}
 		StdBlackShape [RegularPolygonFill 5  2  1.1  0] 'blackStar' 0x2605
 		StdWhiteShape [RegularPolygonFill 5  2  1.1  0] 'whiteStar' 0x2606 [PentagramSw 5.5]
+		StdWhiteShape [RegularPolygonFill 5  2  1.1  0] 'lightWhiteStar' null {.sw ([UnicodeWeightGrade 300 [Math.sqrt Geom.Scalar] GeometryStroke] * [Math.sqrt 5])}
 		StdWhiteShape [RegularPolygonFill 5  2  1.1  0] 'whiteMediumStar' 0x2B50 [Object.assign [PentagramSw 7] Size.Medium]
 		StdBlackShape [RegularPolygonFill 5  2  1.1  0] 'blackSmallStar' 0x2B51 Size.Small
 		StdWhiteShape [RegularPolygonFill 5  2  1.1  0] 'whiteSmallStar' 0x2B52 [Object.assign [PentagramSw 3] Size.Small]
+
+		create-glyph [MangleName 'Hexagram'] [MangleUnicode 0x2721] : glyph-proc
+			set-width Geom.Width
+			local offset : Geom.Size / 3
+			include : union
+				with-transform [Translate 0   offset ] : refer-glyph : MangleName 'whiteTriangleUp'
+				with-transform [Translate 0 (-offset)] : refer-glyph : MangleName 'whiteTriangleDown'
 
 	do "Other Stars"
 		define [CurlyEdgeStar sides shrink overflow phase] : lambda [cx cy size] : begin
@@ -590,8 +599,8 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 			return : spiro-outline corners [close]
 
 		define [PentagramSw c] {.sw ([AdviceStroke c : Math.sqrt Geom.Scalar] * [Math.sqrt 5])}
-		StdBlackShape [CurlyEdgeStar 4  0.6  1.1  0] 'blackFourPrintedStar' 0x2726
-		StdWhiteShape [CurlyEdgeStar 4  0.6  1.1  0] 'whiteFourPrintedStar' 0x2727 [PentagramSw 5]
+		StdBlackShape [CurlyEdgeStar 4  0.6  1.1  0] 'blackFourPointedStar' 0x2726
+		StdWhiteShape [CurlyEdgeStar 4  0.6  1.1  0] 'whiteFourPointedStar' 0x2727 [PentagramSw 5]
 
 	do "Arrow head"
 		define [RightArrowHeadShape cx cy size] : spiro-outline
@@ -601,9 +610,4 @@ glyph-block Symbol-Geometric-Plain : for-width-kinds WideWidth1
 			corner (cx - 0.5 * size)  cy
 
 		StdBlackShape RightArrowHeadShape 'blackArrowHeadRight' 0x27A4 Size.Oblique
-		StdWhiteShape RightArrowHeadShape 'whiteArrowHeadRight' null   Size.Oblique
-
-	do "Other Polygon"
-		create-glyph [MangleName 'straightness'] [MangleUnicode 0x23E4] : glyph-proc
-			set-width Geom.Width
-			include : HBar.m Geom.Left Geom.Right Geom.MidY GeometryStroke
+		StdWhiteShape RightArrowHeadShape 'whiteArrowHeadRight' null {.sw ([Math.min GeometryStroke : AdviceStroke 4.75 : Math.sqrt Geom.Scalar] * [Math.sqrt 5])}

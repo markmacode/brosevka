@@ -1,63 +1,112 @@
 import * as Geometry from "@iosevka/geometry";
 import { Transform } from "@iosevka/geometry/transform";
-import { Radical, VS01 } from "@iosevka/glyph/relation";
+import { VS01 } from "@iosevka/glyph/relation";
 
-export function gcFont(glyphStore, excludedChars, otl) {
-	const daGsub = markSweepOtlLookups(otl.GSUB);
-	markSweepOtlLookups(otl.GPOS);
-	const sink = markGlyphs(glyphStore, excludedChars, otl, daGsub);
-	return sweepGlyphs(glyphStore, sink);
+/// This function will remove all the glyphs outside the subset filter, and all the lookups that are
+/// unreachable or emptied by the subsetting process.
+///
+/// Note that, given the process, glyph markin and lookup marking are entangled. Thus we perform
+/// a looped marking process.
+export function gcFont(glyphStore, subsetFilter, otl) {
+	let markedGlyphNames = createGlyphDepthMapForAllGlyphs(glyphStore);
+	let sizeBefore = markedGlyphNames.size;
+	let sizeAfter = sizeBefore;
+
+	// Set of accessible and directly accessible lookups
+	let aGsub = new Set(),
+		daGsub = new Set();
+	let aGpos = new Set(),
+		_daGpos = new Set();
+
+	do {
+		sizeBefore = sizeAfter;
+		[aGsub, daGsub] = markLookups(otl.GSUB, markedGlyphNames);
+		[aGpos, _daGpos] = markLookups(otl.GPOS, markedGlyphNames);
+		markedGlyphNames = markGlyphs(glyphStore, subsetFilter, otl, daGsub);
+		sizeAfter = markedGlyphNames.size;
+	} while (sizeAfter < sizeBefore);
+
+	analyzeReferenceGraph(glyphStore, markedGlyphNames);
+
+	sweepOtlTable(otl.GSUB, aGsub);
+	sweepOtlTable(otl.GPOS, aGpos);
+	return sweepGlyphs(glyphStore, markedGlyphNames);
+}
+
+function createGlyphDepthMapForAllGlyphs(glyphStore) {
+	const map = new Map();
+	for (const [gName, _g] of glyphStore.namedEntries()) map.set(gName, 1);
+	return map;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-function markSweepOtlLookups(table) {
-	if (!table || !table.features || !table.lookups) return;
-	const accessibleLookupsIds = new Set();
-	const directAccessibleLookupsIds = new Set();
-	markLookups(table, accessibleLookupsIds, directAccessibleLookupsIds);
-	sweepLookups(table, accessibleLookupsIds);
-	sweepFeatures(table, accessibleLookupsIds);
-	return directAccessibleLookupsIds;
-}
-function markLookups(table, sink, sinkDirect) {
-	if (!table || !table.features) return;
-	markLookupsStart(table, sink, sinkDirect);
-	let loop = 0,
-		lookupSetChanged = false;
+/// This function will mark all the lookups that are reachable and non-empty from the marked glyphs.
+/// It will also mark the lookups that are directly reachable from the features.
+function markLookups(table, markedGlyphs) {
+	if (!table?.features) return;
+
+	const reachableLookups = new Set();
+	const directReachableLookups = new Set();
+	markLookupsStart(table, markedGlyphs, reachableLookups, directReachableLookups);
+
+	let sizeBefore = reachableLookups.size,
+		sizeAfter = sizeBefore;
+
 	do {
-		lookupSetChanged = false;
-		let sizeBefore = sink.size;
-		for (const l of Array.from(sink)) {
-			const lookup = table.lookups[l];
-			if (!lookup) continue;
-			if (lookup.type === "gsub_chaining" || lookup.type === "gpos_chaining") {
-				for (let st of lookup.rules) {
-					if (!st || !st.apply) continue;
-					for (const app of st.apply) {
-						if (!app.lookup.name)
-							throw new Error("Unreachable: lookup name should be present");
-						sink.add(app.lookup.name);
-					}
-				}
-			}
+		sizeBefore = sizeAfter;
+		for (const l of Array.from(reachableLookups)) {
+			markLookupIndirect(table, l, markedGlyphs, reachableLookups);
 		}
-		loop++;
-		lookupSetChanged = sizeBefore !== sink.size;
-	} while (loop < 0xff && lookupSetChanged);
+		sizeAfter = reachableLookups.size;
+	} while (sizeAfter > sizeBefore);
+
+	return [reachableLookups, directReachableLookups];
 }
-function markLookupsStart(table, sink, sinkDirect) {
-	for (let f in table.features) {
+
+function markLookupsStart(table, markedGlyphs, sink, sinkDirect) {
+	for (const f in table.features) {
 		const feature = table.features[f];
 		if (!feature) continue;
 		for (const l of feature.lookups) {
+			if (isLookupEmpty(table, l, markedGlyphs)) continue;
 			sink.add(l);
 			sinkDirect.add(l);
 		}
 	}
 }
+function markLookupIndirect(gsub, lid, markedGlyphs, reachableLookups) {
+	const lookup = gsub.lookups[lid];
+	if (!lookup) return;
+
+	if (lookup.type !== "gsub_chaining" && lookup.type !== "gpos_chaining") return;
+	for (const rule of lookup.rules) {
+		if (!rule?.apply) continue;
+		for (const app of rule.apply) {
+			if (!app.lookup.name) throw new Error("Unreachable: lookup name should be present");
+			if (isLookupEmpty(gsub, app.lookup.name, markedGlyphs)) continue;
+			reachableLookups.add(app.lookup.name);
+		}
+	}
+}
+
+function isLookupEmpty(gsub, lid, markedGlyphs) {
+	const lookup = gsub.lookups[lid];
+	if (!lookup) return true;
+
+	const handler = LookupTypehHanlderMap[lookup.type];
+	if (!handler) return false;
+
+	return handler.isEmpty(gsub, lookup, markedGlyphs);
+}
+
+function sweepOtlTable(table, accessibleLookupsIds) {
+	if (!table?.features || !table.lookups) return;
+	sweepLookups(table, accessibleLookupsIds);
+	sweepFeatures(table, accessibleLookupsIds);
+}
 function sweepLookups(table, accessibleLookupsIds) {
-	let lookups1 = {};
+	const lookups1 = {};
 	for (const l in table.lookups) {
 		if (accessibleLookupsIds.has(l)) lookups1[l] = table.lookups[l];
 	}
@@ -65,8 +114,8 @@ function sweepLookups(table, accessibleLookupsIds) {
 	return accessibleLookupsIds;
 }
 function sweepFeatures(table, accessibleLookupsIds) {
-	let features1 = {};
-	for (let f in table.features) {
+	const features1 = {};
+	for (const f in table.features) {
 		const feature = table.features[f];
 		if (!feature) continue;
 		const featureFiltered = {
@@ -85,31 +134,30 @@ function sweepFeatures(table, accessibleLookupsIds) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-function markGlyphs(glyphStore, excludedChars, otl, daGsub) {
-	const markedGlyphs = markGlyphsInitial(glyphStore, excludedChars);
+function markGlyphs(glyphStore, subsetFilter, otl, daGsub) {
+	const markedGlyphs = markGlyphsInitial(glyphStore, subsetFilter);
 	while (markGlyphsGr(glyphStore, markedGlyphs, otl));
 	if (otl.GSUB) markGlyphsByGsub(otl.GSUB, markedGlyphs, daGsub);
 	while (markGlyphsGr(glyphStore, markedGlyphs, otl));
-	analyzeReferenceGraph(glyphStore, markedGlyphs);
 	return markedGlyphs;
 }
 
 function markSingleGlyph(markedGlyphs, gName, d) {
-	let existing = markedGlyphs.get(gName);
+	const existing = markedGlyphs.get(gName);
 	if (!existing || d < existing) markedGlyphs.set(gName, d);
 }
 
-function markGlyphsInitial(glyphStore, excludedChars) {
-	let markedGlyphs = new Map();
+function markGlyphsInitial(glyphStore, subsetFilter) {
+	const markedGlyphs = new Map();
 	for (const [gName, g] of glyphStore.namedEntries()) {
 		if (!g) continue;
 		if (g.glyphRank > 0) markSingleGlyph(markedGlyphs, gName, 1);
-		if (Radical.get(g)) markSingleGlyph(markedGlyphs, gName, 1);
+
 		const unicodeSet = glyphStore.queryUnicodeOf(g);
 		if (unicodeSet) {
 			for (const u of unicodeSet) {
-				if (excludedChars.has(u)) continue;
-				let d = Math.max(1, Math.min(u, 0xffff) >> 4);
+				if (!subsetFilter.isCharacterIncluded(u)) continue;
+				const d = Math.max(1, Math.min(u, 0xffff) >> 4);
 				markSingleGlyph(markedGlyphs, gName, d);
 			}
 		}
@@ -118,7 +166,7 @@ function markGlyphsInitial(glyphStore, excludedChars) {
 	return markedGlyphs;
 }
 
-function markGlyphsGr(glyphStore, markedGlyphs, otl) {
+function markGlyphsGr(glyphStore, markedGlyphs, _otl) {
 	const glyphCount = markedGlyphs.size;
 	for (const g of glyphStore.glyphs()) {
 		markLinkedGlyph(markedGlyphs, g, VS01);
@@ -142,76 +190,9 @@ function markGlyphsByGsub(gsub, markedGlyphs, daGsub) {
 function markGlyphsByLookup(gsub, lid, markedGlyphs) {
 	const lookup = gsub.lookups[lid];
 	if (!lookup) return;
-	switch (lookup.type) {
-		case "gsub_single":
-			return markGlyphsGsubSingle(markedGlyphs, lookup);
-		case "gsub_multiple":
-			return markGlyphsGsubMultiple(markedGlyphs, lookup);
-		case "gsub_alternate":
-			return markGlyphsGsubAlternate(markedGlyphs, lookup);
-		case "gsub_ligature":
-			return markGlyphsGsubLigature(markedGlyphs, lookup);
-		case "gsub_chaining": {
-			rules: for (const rule of lookup.rules) {
-				// Check whether all match coverages has at least one glyph in the sink
-				for (const m of rule.match) {
-					let atLeastOneMatch = false;
-					for (const matchGlyph of m)
-						if (markedGlyphs.has(matchGlyph)) atLeastOneMatch = true;
-					if (!atLeastOneMatch) continue rules;
-				}
-				// If so traverse through the lookup applications
-				for (const app of rule.apply) {
-					if (!app.lookup.name)
-						throw new Error("Unreachable: lookup name should be present");
-					markGlyphsByLookup(gsub, app.lookup.name, markedGlyphs);
-				}
-			}
-			break;
-		}
-		case "gsub_reverse":
-			return markGlyphsGsubReverse(markedGlyphs, lookup);
-	}
-}
-
-function markGlyphsGsubSingle(markedGlyphs, lookup) {
-	const st = lookup.substitutions;
-	for (const k in st) {
-		const d = markedGlyphs.get(k);
-		if (d && st[k]) markSingleGlyph(markedGlyphs, st[k], d + 0x1000);
-	}
-}
-function markGlyphsGsubMultiple(markedGlyphs, lookup) {
-	const st = lookup.substitutions;
-	for (const k in st) {
-		const d = markedGlyphs.get(k);
-		if (d && st[k]) for (const g of st[k]) markSingleGlyph(markedGlyphs, g, d + 0x1000);
-	}
-}
-function markGlyphsGsubAlternate(markedGlyphs, lookup) {
-	markGlyphsGsubMultiple(markedGlyphs, lookup);
-}
-function markGlyphsGsubLigature(markedGlyphs, lookup) {
-	const st = lookup.substitutions;
-	for (const sub of st) {
-		let maxD = 0;
-		for (const g of sub.from) {
-			const d = markedGlyphs.get(g);
-			if (d && d > maxD) maxD = d;
-		}
-		if (maxD && sub.to) markSingleGlyph(markedGlyphs, sub.to, maxD + 0x1000);
-	}
-}
-function markGlyphsGsubReverse(markedGlyphs, lookup) {
-	for (const rule of lookup.rules) {
-		if (rule.match && rule.to) {
-			const matchCoverage = rule.match[rule.inputIndex];
-			for (let j = 0; j < matchCoverage.length; j++) {
-				const d = markedGlyphs.get(matchCoverage[j]);
-				if (d && rule.to[j]) markSingleGlyph(markedGlyphs, rule.to[j], d + 0x1000);
-			}
-		}
-	}
+	const handler = LookupTypehHanlderMap[lookup.type];
+	if (!handler) return;
+	handler.markGlyphs(gsub, lookup, markedGlyphs);
 }
 
 function sweepGlyphs(glyphStore, gnSet) {
@@ -220,8 +201,158 @@ function sweepGlyphs(glyphStore, gnSet) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+// OTL lookup handlers
+
+const GsubSingle = {
+	isEmpty(_gsub, lookup, markedGlyphs) {
+		const st = lookup.substitutions;
+		for (const k in st) if (markedGlyphs.has(k)) return false;
+		return true;
+	},
+	markGlyphs(_gsub, lookup, markedGlyphs) {
+		const st = lookup.substitutions;
+		for (const k in st) {
+			const d = markedGlyphs.get(k);
+			if (d && st[k]) markSingleGlyph(markedGlyphs, st[k], d + 0x1000);
+		}
+	},
+};
+const GsubMultipleAlternate = {
+	isEmpty(_gsub, lookup, markedGlyphs) {
+		const st = lookup.substitutions;
+		for (const k in st) if (markedGlyphs.has(k)) return false;
+		return true;
+	},
+	markGlyphs(_gsub, lookup, markedGlyphs) {
+		const st = lookup.substitutions;
+		for (const k in st) {
+			const d = markedGlyphs.get(k);
+			if (d && st[k]) for (const g of st[k]) markSingleGlyph(markedGlyphs, g, d + 0x1000);
+		}
+	},
+};
+const GsubLigature = {
+	isEmpty(_gsub, lookup, markedGlyphs) {
+		const st = lookup.substitutions;
+		for (const sub of st) {
+			// Check all of the glyphs are in the marked glyphs set
+			let allGlyphsInSet = true;
+			for (const g of sub.from) {
+				if (!markedGlyphs.has(g)) {
+					allGlyphsInSet = false;
+					break;
+				}
+			}
+			// If all glyphs are in the marked glyphs set, then this substitution is valid,
+			// thus the lookup is not empty. Return false.
+			if (allGlyphsInSet) return false;
+		}
+		return true;
+	},
+	markGlyphs(_gsub, lookup, markedGlyphs) {
+		const st = lookup.substitutions;
+		for (const sub of st) {
+			let maxD = 0;
+			for (const g of sub.from) {
+				const d = markedGlyphs.get(g);
+				if (d && d > maxD) maxD = d;
+			}
+			if (maxD && sub.to) markSingleGlyph(markedGlyphs, sub.to, maxD + 0x1000);
+		}
+	},
+};
+const GsubChaining = {
+	isEmpty(gsub, lookup, markedGlyphs) {
+		rules: for (const rule of lookup.rules) {
+			if (!rule.match || !rule.apply) continue;
+			// Check if all match coverages have at least one glyph in the marked glyphs set
+			// If not, skip to next rule
+			for (const m of rule.match) {
+				let atLeastOneMatch = false;
+				for (const matchGlyph of m)
+					if (markedGlyphs.has(matchGlyph)) atLeastOneMatch = true;
+				if (!atLeastOneMatch) continue rules;
+			}
+
+			// Check all the applications. If all of them are empty, skip to next rule.
+			let allApplicationsAreEmpty = true;
+			for (const app of rule.apply) {
+				if (!app.lookup.name) throw new Error("Unreachable: lookup name should be present");
+				if (!isLookupEmpty(gsub, app.lookup.name, markedGlyphs)) {
+					allApplicationsAreEmpty = false;
+					break;
+				}
+			}
+			if (allApplicationsAreEmpty) continue;
+
+			// This rule is valid, return false
+			return false;
+		}
+		return true;
+	},
+	markGlyphs(gsub, lookup, markedGlyphs) {
+		rules: for (const rule of lookup.rules) {
+			// Check whether all match coverages has at least one glyph in the sink
+			for (const m of rule.match) {
+				let atLeastOneMatch = false;
+				for (const matchGlyph of m)
+					if (markedGlyphs.has(matchGlyph)) atLeastOneMatch = true;
+				if (!atLeastOneMatch) continue rules;
+			}
+			// If so traverse through the lookup applications
+			for (const app of rule.apply) {
+				if (!app.lookup.name) throw new Error("Unreachable: lookup name should be present");
+				markGlyphsByLookup(gsub, app.lookup.name, markedGlyphs);
+			}
+		}
+	},
+};
+const GsubReverse = {
+	isEmpty(_gsub, lookup, markedGlyphs) {
+		if (!lookup.rules) return true;
+		rules: for (const rule of lookup.rules) {
+			// Check if all match coverages have at least one glyph in the marked glyphs set
+			// If not, skip to next rule
+			if (!rule.match || !rule.to) continue;
+			for (const m of rule.match) {
+				let atLeastOneMatch = false;
+				for (const matchGlyph of m)
+					if (markedGlyphs.has(matchGlyph)) atLeastOneMatch = true;
+				if (!atLeastOneMatch) continue rules;
+			}
+
+			// This rule is valid, return false
+			return false;
+		}
+		return true;
+	},
+	markGlyphs(_gsub, lookup, markedGlyphs) {
+		for (const rule of lookup.rules) {
+			if (rule.match && rule.to) {
+				const matchCoverage = rule.match[rule.inputIndex];
+				for (let j = 0; j < matchCoverage.length; j++) {
+					const d = markedGlyphs.get(matchCoverage[j]);
+					if (d && rule.to[j]) markSingleGlyph(markedGlyphs, rule.to[j], d + 0x1000);
+				}
+			}
+		}
+	},
+};
+
+const LookupTypehHanlderMap = {
+	gsub_single: GsubSingle,
+	gsub_multiple: GsubMultipleAlternate,
+	gsub_alternate: GsubMultipleAlternate,
+	gsub_ligature: GsubLigature,
+	gsub_chaining: GsubChaining,
+	gsub_reverse: GsubReverse,
+	// nothing to do here for gpos
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 function analyzeReferenceGraph(glyphStore, markedGlyphs) {
-	let depthMap = new Map();
+	const depthMap = new Map();
 	let aliasMap = new Map();
 
 	for (const [gn, g] of glyphStore.namedEntries()) {
@@ -230,7 +361,7 @@ function analyzeReferenceGraph(glyphStore, markedGlyphs) {
 	}
 	aliasMap = optimizeAliasMap(aliasMap, depthMap);
 
-	let memo = new Set();
+	const memo = new Set();
 	for (const [gn, g] of glyphStore.namedEntries()) {
 		const d = markedGlyphs.get(gn);
 		if (d) rectifyGlyphAndMarkComponents(glyphStore, aliasMap, markedGlyphs, memo, g, d);
@@ -242,7 +373,7 @@ function analyzeReferenceGraph(glyphStore, markedGlyphs) {
 function traverseReferenceTree(depthMap, aliasMap, g, d) {
 	depthMapSet(depthMap, g, d);
 
-	let refs = g.geometry.toReferences();
+	const refs = g.geometry.toReferences();
 	if (!refs) return;
 
 	for (const sr of refs) {
@@ -255,7 +386,7 @@ function traverseReferenceTree(depthMap, aliasMap, g, d) {
 }
 
 function depthMapSet(depthMap, g, d) {
-	let existing = depthMap.get(g);
+	const existing = depthMap.get(g);
 	if (null == existing || d < existing) {
 		depthMap.set(g, d);
 		return d;
@@ -267,7 +398,7 @@ function depthMapSet(depthMap, g, d) {
 // Optimize the alias map by altering the geometry of glyphs to reference the "representative glyph",
 // which is the glyph with the smallest depth in the cluster of glyphs that aliased to each other.
 function optimizeAliasMap(aliasMap, depthMap) {
-	let collection = collectAliasMap(aliasMap);
+	const collection = collectAliasMap(aliasMap);
 	resolveCollectionRepresentative(collection, depthMap);
 	return alterGeometryAndOptimize(collection);
 }
@@ -275,7 +406,7 @@ function optimizeAliasMap(aliasMap, depthMap) {
 // Collect all glyphs into clusters, grouped by the terminal glyph of alias chains.
 // Each cluster will contain all the the glyphs that are aliases of the terminal glyph.
 function collectAliasMap(aliasMap) {
-	let aliasResolution = new Map();
+	const aliasResolution = new Map();
 	for (const g of aliasMap.keys()) {
 		const terminal = getAliasTerminal(aliasMap, g);
 		let m = aliasResolution.get(terminal.glyph);
@@ -295,7 +426,7 @@ function collectAliasMap(aliasMap) {
 
 // Resolve the representative glyph of each cluster, using the glyph with the smallest depth.
 function resolveCollectionRepresentative(collection, depthMap) {
-	for (const [gT, cluster] of collection) {
+	for (const [_gT, cluster] of collection) {
 		let d = null;
 		for (const [g, tf] of cluster.aliases) {
 			const dt = depthMap.get(g);
@@ -311,19 +442,19 @@ function resolveCollectionRepresentative(collection, depthMap) {
 // The geometry of each glyph will be altered to reference the representative glyph of its cluster,
 // while the representative itself's geometry will be the terminal glyph's geometry with translation.
 function alterGeometryAndOptimize(collection) {
-	let optimized = new Map();
+	const optimized = new Map();
 	for (const [gT, cluster] of collection) {
 		if (!cluster.representative) {
 			throw new Error("Unreachable: each cluster should have at least one representative");
 		}
 
-		cluster.representative.glyph.geometry = new Geometry.TransformedGeometry(
+		cluster.representative.glyph.geometry = Geometry.TransformedGeometry.create(
 			Transform.Translate(cluster.representative.x, cluster.representative.y),
 			gT.geometry,
 		);
 
 		for (const [g, tf] of cluster.aliases) {
-			if (g != cluster.representative.glyph) {
+			if (g !== cluster.representative.glyph) {
 				g.geometry = new Geometry.ReferenceGeometry(
 					cluster.representative.glyph,
 					tf.x - cluster.representative.x,
@@ -359,15 +490,16 @@ function rectifyGlyphAndMarkComponents(glyphStore, aliasMap, markedGlyphs, memo,
 	if (memo.has(g)) return;
 	memo.add(g);
 
+	// biome-ignore lint/suspicious/noConfusingLabels: use breaks to simplify the control flow of this function
 	analyzeRefs: {
-		let refs = g.geometry.toReferences();
+		const refs = g.geometry.toReferences();
 		if (!refs) break analyzeRefs;
 
-		let partGns = []; // The names of the referenced glyphs
-		let parts = []; // The parts of the new geometry
+		const partGns = []; // The names of the referenced glyphs
+		const parts = []; // The parts of the new geometry
 		let hasMarked = false; // Whether any of the referenced glyphs is marked
 
-		for (let sr of refs) {
+		for (const sr of refs) {
 			// Resolve alias
 			const alias = aliasMap.get(sr.glyph);
 			if (alias) {
@@ -406,5 +538,5 @@ function rectifyGlyphAndMarkComponents(glyphStore, aliasMap, markedGlyphs, memo,
 	}
 
 	// Make the glyph radical if it has no marked references.
-	g.geometry = g.geometry.unlinkReferences();
+	g.geometry = new Geometry.RadicalGeometry(g.geometry);
 }
